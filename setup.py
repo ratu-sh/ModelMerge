@@ -8,7 +8,7 @@ setup(
     description="ModelMerge is a multi-large language model API aggregator.",
     long_description=Path.open(Path("README.md"), encoding="utf-8").read(),
     long_description_content_type="text/markdown",
-    packages=find_packages(where=["models", "tools", "utils"]),
+    packages=find_packages(),
     # package_dir={"": "."},
     install_requires=Path.open(Path("requirements.txt"), encoding="utf-8").read().splitlines(),
     # py_modules=["LLM-Hub"]
