@@ -3,7 +3,7 @@ from datetime import datetime
 
 from utils import prompt
 # from models import chatgpt
-from models import chatgpt
+from ModelMerge import chatgpt
 
 
 LANGUAGE = os.environ.get('LANGUAGE', 'Simplified Chinese')
