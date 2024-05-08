@@ -1,9 +1,9 @@
 import os
 from datetime import datetime
 
-from utils import prompt
+from ModelMerge.utils import prompt
 # from models import chatgpt
-from ModelMerge import chatgpt
+from ModelMerge.models import chatgpt
 
 
 LANGUAGE = os.environ.get('LANGUAGE', 'Simplified Chinese')

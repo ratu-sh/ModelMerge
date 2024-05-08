@@ -3,7 +3,7 @@ import httpx
 import requests
 from pathlib import Path
 
-from utils import prompt
+from ..utils import prompt
 
 
 

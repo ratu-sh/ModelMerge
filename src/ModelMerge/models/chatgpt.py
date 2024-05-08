@@ -11,8 +11,8 @@ import requests
 import tiktoken
 
 # import config
-from utils.plugins import check_json, Web_crawler, cut_message
-from tools.function_call import function_call_list
+from ..utils.plugins import check_json, Web_crawler, cut_message
+from ..tools.function_call import function_call_list
 
 def get_filtered_keys_from_object(obj: object, *keys: str) -> Set[str]:
     """
