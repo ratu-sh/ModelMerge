@@ -2,7 +2,6 @@ import os
 from datetime import datetime
 
 from ModelMerge.utils import prompt
-# from models import chatgpt
 from ModelMerge.models import chatgpt
 
 
