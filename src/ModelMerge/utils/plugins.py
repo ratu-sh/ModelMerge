@@ -270,7 +270,7 @@ def cut_message(message: str, max_tokens: int):
     encode_text = encoding.encode(message)
     return message, len(encode_text)
 
-def get_url_text_list(prompt):
+def get_url_text_list(prompt, chatgpt_api_url):
     start_time = record_time.time()
     yield "🌐 正在搜索您的问题，提取关键词..."
 
@@ -278,7 +278,7 @@ def get_url_text_list(prompt):
     #     chainllm = EducationalLLM()
     # else:
     #     chainllm = ChatOpenAI(temperature=config.temperature, openai_api_base=config.bot_api_url.v1_url, model_name=config.GPT_ENGINE, openai_api_key=config.API)
-    chainllm = ChatOpenAI(temperature=config.temperature, openai_api_base=config.bot_api_url.v1_url, model_name=config.GPT_ENGINE, openai_api_key=config.API)
+    chainllm = ChatOpenAI(temperature=config.temperature, openai_api_base=chatgpt_api_url, model_name=config.GPT_ENGINE, openai_api_key=config.API)
 
     # url_set_list, url_pdf_set_list = get_search_url(prompt, chainllm)
     url_set_list, url_pdf_set_list = yield from get_search_url(prompt, chainllm)
@@ -304,9 +304,9 @@ def get_url_text_list(prompt):
     return url_text_list
 
 # Plugins 搜索
-def get_search_results(prompt: str):
+def get_search_results(prompt: str, chatgpt_api_url):
 
-    url_text_list = yield from get_url_text_list(prompt)
+    url_text_list = yield from get_url_text_list(prompt, chatgpt_api_url)
     useful_source_text = "\n\n".join(url_text_list)
 
     # useful_source_text, search_tokens_len = cut_message(useful_source_text, context_max_tokens)

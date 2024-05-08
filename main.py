@@ -13,5 +13,5 @@ Current_Date = current_date.strftime("%Y-%m-%d")
 
 systemprompt = os.environ.get('SYSTEMPROMPT', prompt.system_prompt.format(LANGUAGE, Current_Date))
 bot = chatgpt(api_key=f"{API}", engine=GPT_ENGINE, system_prompt=systemprompt)
-for text in bot.ask_stream("hi"):
+for text in bot.ask_stream("今天的微博热搜有哪些？"):
     print(text, end="")

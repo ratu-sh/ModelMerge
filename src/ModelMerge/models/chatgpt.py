@@ -11,7 +11,7 @@ import requests
 import tiktoken
 
 # import config
-from ..utils.plugins import check_json, Web_crawler, cut_message
+from ..utils.plugins import check_json, Web_crawler, cut_message, get_search_results
 from ..tools.function_call import function_call_list
 
 def get_filtered_keys_from_object(obj: object, *keys: str) -> Set[str]:
@@ -428,7 +428,7 @@ class chatgpt(BaseLLM):
                 print("\033[32m function_call", function_call_name, "max token:", function_call_max_tokens, "\033[0m")
                 if function_call_name == "get_search_results":
                     prompt = json.loads(function_full_response)["prompt"]
-                    function_response = yield from eval(function_call_name)(prompt)
+                    function_response = yield from eval(function_call_name)(prompt, chatgpt_api_url.v1_url)
                     function_response, text_len = cut_message(function_response, function_call_max_tokens)
                     function_response = (
                         f"You need to response the following question: {prompt}. Search results is provided inside <Search_results></Search_results> XML tags. Your task is to think about the question step by step and then answer the above question in {LANGUAGE} based on the Search results provided. Please response in {LANGUAGE} and adopt a style that is logical, in-depth, and detailed. Note: In order to make the answer appear highly professional, you should be an expert in textual analysis, aiming to make the answer precise and comprehensive. Directly response markdown format, without using markdown code blocks"
