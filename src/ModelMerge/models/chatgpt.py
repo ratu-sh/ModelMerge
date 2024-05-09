@@ -414,6 +414,7 @@ class chatgpt(BaseLLM):
                 print("\033[32m function_call", function_call_name, "max token:", function_call_max_tokens, "\033[0m")
                 if function_call_name == "get_search_results":
                     prompt = json.loads(function_full_response)["prompt"]
+                    yield "🌐 正在搜索您的问题，提取关键词..."
                     llm = BaseLLM(api_key=self.api_key, api_url=self.api_url.source_api_url , engine=self.engine, system_prompt=self.system_prompt)
                     keywords = llm.ask(search_key_word_prompt.format(source=prompt)).split("\n")
                     function_response = yield from eval(function_call_name)(prompt, keywords)
@@ -657,3 +658,52 @@ class chatgpt(BaseLLM):
             if "aclient" in keys:
                 keys.remove("aclient")
             self.__dict__.update({key: loaded_config[key] for key in keys})
+
+class Imagebot(BaseLLM):
+    def __init__(
+        self,
+        api_key: str,
+        api_url: str = (os.environ.get("API_URL") or "https://api.openai.com/v1/chat/completions"),
+        timeout: float = 20,
+    ):
+        super().__init__(api_key, api_url=api_url, timeout=timeout)
+        self.engine: str = "dall-e-3"
+
+    def dall_e_3(
+        self,
+        prompt: str,
+        model: str = None,
+        **kwargs,
+    ):
+        url = self.api_url.image_url
+        headers = {"Authorization": f"Bearer {kwargs.get('api_key', self.api_key)}"}
+
+        json_post = {
+                "model": os.environ.get("IMAGE_MODEL_NAME") or model or self.engine,
+                "prompt": prompt,
+                "n": 1,
+                "size": "1024x1024",
+        }
+        try:
+            response = self.session.post(
+                url,
+                headers=headers,
+                json=json_post,
+                timeout=kwargs.get("timeout", self.timeout),
+                stream=True,
+            )
+        except ConnectionError:
+            print("连接错误，请检查服务器状态或网络连接。")
+            return
+        except requests.exceptions.ReadTimeout:
+            print("请求超时，请检查网络连接或增加超时时间。{e}")
+            return
+        except Exception as e:
+            print(f"发生了未预料的错误: {e}")
+            return
+
+        if response.status_code != 200:
+            raise Exception(f"{response.status_code} {response.reason} {response.text}")
+        json_data = json.loads(response.text)
+        url = json_data["data"][0]["url"]
+        yield url

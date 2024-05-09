@@ -1,26 +1,26 @@
-class gemini_bot:
+import os
+import json
+import requests
+import tiktoken
+
+from .config import BaseLLM, ENGINES
+
+class gemini(BaseLLM):
     def __init__(
         self,
         api_key: str,
         engine: str = os.environ.get("GPT_ENGINE") or "gemini-1.5-pro-latest",
+        api_url: str = "https://generativelanguage.googleapis.com/v1beta/models/{model}:{stream}?key={api_key}",
+        system_prompt: str = "You are ChatGPT, a large language model trained by OpenAI. Respond conversationally",
         temperature: float = 0.5,
         top_p: float = 0.7,
-        chat_url: str = "https://generativelanguage.googleapis.com/v1beta/models/{model}:{stream}?key={api_key}",
         timeout: float = 20,
-        system_prompt: str = "You are ChatGPT, a large language model trained by OpenAI. Respond conversationally",
-        **kwargs,
     ):
-        self.api_key: str = api_key
-        self.engine: str = engine
-        self.temperature = temperature
-        self.top_p = top_p
-        self.chat_url = chat_url
-        self.timeout = timeout
-        self.session = requests.Session()
+        super().__init__(api_key, engine, system_prompt=system_prompt, timeout=timeout, temperature=temperature, top_p=top_p)
+        self.api_url = api_url
         self.conversation: dict[str, list[dict]] = {
             "default": [],
         }
-        self.system_prompt = system_prompt
 
     def add_to_conversation(
         self,
@@ -37,10 +37,6 @@ class gemini_bot:
             self.reset(convo_id=convo_id)
         # print("message", message)
         self.conversation[convo_id].append({"role": role, "parts": [{"text": message}]})
-        # index = len(self.conversation[convo_id]) - 2
-        # if index >= 0 and self.conversation[convo_id][index]["role"] == self.conversation[convo_id][index + 1]["role"]:
-        #     self.conversation[convo_id][index]["content"] += self.conversation[convo_id][index + 1]["content"]
-        #     self.conversation[convo_id].pop(index + 1)
 
     def reset(self, convo_id: str = "default", system_prompt: str = None) -> None:
         """
@@ -131,7 +127,7 @@ class gemini_bot:
         }
         print(json.dumps(json_post, indent=4, ensure_ascii=False))
 
-        url = self.chat_url.format(model=model or self.engine, stream="streamGenerateContent", api_key=self.api_key)
+        url = self.api_url.format(model=model or self.engine, stream="streamGenerateContent", api_key=self.api_key)
 
         try:
             response = self.session.post(

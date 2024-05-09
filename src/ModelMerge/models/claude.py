@@ -1,31 +1,30 @@
-from tools import claude_tools_list
+from ..tools.function_call import claude_tools_list
+import os
+import json
+import tiktoken
+import requests
+
+from .config import BaseLLM, ENGINES
 
 class claudeConversation(dict):
     def Conversation(self, index):
         conversation_list = super().__getitem__(index)
         return "\n\n" + "\n\n".join([f"{item['role']}:{item['content']}" for item in conversation_list]) + "\n\nAssistant:"
 
-class claudebot:
+class claude(BaseLLM):
     def __init__(
         self,
         api_key: str,
         engine: str = os.environ.get("GPT_ENGINE") or "claude-2.1",
+        api_url: str = "https://api.anthropic.com/v1/complete",
+        system_prompt: str = "You are ChatGPT, a large language model trained by OpenAI. Respond conversationally",
         temperature: float = 0.5,
         top_p: float = 0.7,
-        chat_url: str = "https://api.anthropic.com/v1/complete",
         timeout: float = 20,
-        system_prompt: str = "You are ChatGPT, a large language model trained by OpenAI. Respond conversationally",
-        **kwargs,
     ):
-        self.api_key: str = api_key
-        self.engine: str = engine
-        self.temperature = temperature
-        self.top_p = top_p
-        self.chat_url = chat_url
-        self.timeout = timeout
-        self.session = requests.Session()
+        super().__init__(api_key, engine, api_url, system_prompt, timeout=timeout, temperature=temperature, top_p=top_p)
+        self.api_url = api_url
         self.conversation = claudeConversation()
-        self.system_prompt = system_prompt
 
     def add_to_conversation(
         self,
@@ -46,7 +45,7 @@ class claudebot:
         """
         Reset the conversation
         """
-        self.conversation[convo_id] = list()
+        self.conversation[convo_id] = claudeConversation()
 
     def __truncate_conversation(self, convo_id: str = "default") -> None:
         """
@@ -102,7 +101,7 @@ class claudebot:
         # self.__truncate_conversation(convo_id=convo_id)
         # print(self.conversation[convo_id])
 
-        url = self.chat_url
+        url = self.api_url
         headers = {
             "accept": "application/json",
             "anthropic-version": "2023-06-01",
@@ -153,32 +152,23 @@ class claudebot:
                 full_response += content
                 yield content
         self.add_to_conversation(full_response, response_role, convo_id=convo_id)
-        # print(repr(self.conversation.Conversation(convo_id)))
-        # print("total tokens:", self.get_token_count(convo_id))
 
-class claude3bot:
+class claude3(BaseLLM):
     def __init__(
         self,
         api_key: str,
         engine: str = os.environ.get("GPT_ENGINE") or "claude-3-opus-20240229",
-        temperature: float = 0.5,
-        top_p: float = 0.7,
-        chat_url: str = "https://api.anthropic.com/v1/messages",
-        timeout: float = 20,
+        api_url: str = "https://api.anthropic.com/v1/messages",
         system_prompt: str = "You are ChatGPT, a large language model trained by OpenAI. Respond conversationally",
-        **kwargs,
+        temperature: float = 0.5,
+        timeout: float = 20,
+        top_p: float = 0.7,
     ):
-        self.api_key: str = api_key
-        self.engine: str = engine
-        self.temperature = temperature
-        self.top_p = top_p
-        self.chat_url = chat_url
-        self.timeout = timeout
-        self.session = requests.Session()
+        super().__init__(api_key, engine, api_url, system_prompt, timeout=timeout, temperature=temperature, top_p=top_p)
+        self.api_url = api_url
         self.conversation: dict[str, list[dict]] = {
             "default": [],
         }
-        self.system_prompt = system_prompt
 
     def add_to_conversation(
         self,
@@ -193,7 +183,6 @@ class claude3bot:
 
         if convo_id not in self.conversation or pass_history == False:
             self.reset(convo_id=convo_id)
-        # print("message", message)
         self.conversation[convo_id].append({"role": role, "content": message})
         index = len(self.conversation[convo_id]) - 2
         if index >= 0 and self.conversation[convo_id][index]["role"] == self.conversation[convo_id][index + 1]["role"]:
@@ -260,7 +249,7 @@ class claude3bot:
         # self.__truncate_conversation(convo_id=convo_id)
         # print(self.conversation[convo_id])
 
-        url = self.chat_url
+        url = self.api_url
         headers = {
             "x-api-key": f"{kwargs.get('api_key', self.api_key)}",
             "anthropic-version": "2023-06-01",
@@ -326,5 +315,3 @@ class claude3bot:
                 full_response += content
                 yield content
         self.add_to_conversation(full_response, response_role, convo_id=convo_id)
-        # print(repr(self.conversation.Conversation(convo_id)))
-        # print("total tokens:", self.get_token_count(convo_id))

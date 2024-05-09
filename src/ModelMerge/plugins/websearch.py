@@ -192,9 +192,7 @@ def concat_url(threads):
 
 def get_url_text_list(keywords, search_url_num):
     start_time = record_time.time()
-    yield "🌐 正在搜索您的问题，提取关键词..."
 
-    # url_set_list, url_pdf_set_list = get_search_url(prompt, chainllm)
     url_set_list, url_pdf_set_list = yield from get_search_url(keywords, search_url_num)
 
     yield "🌐 已找到一些有用的链接，正在获取详细内容..."
@@ -206,8 +204,6 @@ def get_url_text_list(keywords, search_url_num):
         threads.append(url_search_thread)
 
     url_text_list = concat_url(threads)
-    # print("url_text_list", url_text_list)
-
 
     yield "🌐 快完成了✅，正在为您整理搜索结果..."
     end_time = record_time.time()
