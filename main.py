@@ -19,9 +19,9 @@ Current_Date = current_date.strftime("%Y-%m-%d")
 
 systemprompt = os.environ.get('SYSTEMPROMPT', prompt.system_prompt.format(LANGUAGE, Current_Date))
 bot = chatgpt(api_key=API, api_url=API_URL , engine=GPT_ENGINE, system_prompt=systemprompt)
-bot = claude3(api_key=CLAUDE_API, engine=GPT_ENGINE, system_prompt=systemprompt)
-bot = gemini(api_key=GOOGLE_AI_API_KEY, engine=GPT_ENGINE, system_prompt=systemprompt)
-bot = groq(api_key=GROQ_API_KEY, engine=GPT_ENGINE, system_prompt=systemprompt)
+# bot = claude3(api_key=CLAUDE_API, engine=GPT_ENGINE, system_prompt=systemprompt)
+# bot = gemini(api_key=GOOGLE_AI_API_KEY, engine=GPT_ENGINE, system_prompt=systemprompt)
+# bot = groq(api_key=GROQ_API_KEY, engine=GPT_ENGINE, system_prompt=systemprompt)
 # for text in bot.ask_stream("今天的微博热搜有哪些？"):
 for text in bot.ask_stream("python 包duckduckgo-search怎么使用？"):
     print(text, end="")

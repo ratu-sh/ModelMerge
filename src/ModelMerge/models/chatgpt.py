@@ -334,7 +334,6 @@ class chatgpt(BaseLLM):
             model_max_tokens = min(kwargs.get("max_tokens", self.max_tokens), self.max_tokens - message_token["total"])
         print("model_max_tokens", model_max_tokens)
         json_post["max_tokens"] = model_max_tokens
-
         try:
             response = self.session.post(
                 self.api_url.chat_url,

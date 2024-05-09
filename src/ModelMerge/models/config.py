@@ -23,10 +23,11 @@ class BaseAPI:
         from urllib.parse import urlparse, urlunparse
         self.source_api_url: str = api_url
         parsed_url = urlparse(self.source_api_url)
-        self.base_url: str = urlunparse(parsed_url[:2] + ("",) * 4)
-        self.v1_url: str = urlunparse(parsed_url[:2] + ("/v1",) + ("",) * 3)
-        self.chat_url: str = urlunparse(parsed_url[:2] + ("/v1/chat/completions",) + ("",) * 3)
-        self.image_url: str = urlunparse(parsed_url[:2] + ("/v1/images/generations",) + ("",) * 3)
+        before_v1 = parsed_url.path.split("/v1")[0]
+        self.base_url: str = urlunparse(parsed_url[:2] + (before_v1,) + ("",) * 3)
+        self.v1_url: str = urlunparse(parsed_url[:2]+ (before_v1 + "/v1",) + ("",) * 3)
+        self.chat_url: str = urlunparse(parsed_url[:2] + (before_v1 + "/v1/chat/completions",) + ("",) * 3)
+        self.image_url: str = urlunparse(parsed_url[:2] + (before_v1 + "/v1/images/generations",) + ("",) * 3)
 
 class BaseLLM:
     def __init__(
