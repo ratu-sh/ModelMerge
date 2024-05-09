@@ -9,9 +9,7 @@ PORT = int(os.environ.get('PORT', '8080'))
 NICK = os.environ.get('NICK', None)
 API = os.environ.get('API', None)
 PASS_HISTORY = (os.environ.get('PASS_HISTORY', "False") == "False") == False
-USE_GOOGLE = (os.environ.get('USE_GOOGLE', "True") == "False") == False
-if os.environ.get('GOOGLE_API_KEY', None) == None and os.environ.get('GOOGLE_CSE_ID', None) == None:
-    USE_GOOGLE = False
+
 temperature = float(os.environ.get('temperature', '0.5'))
 GPT_ENGINE = os.environ.get('GPT_ENGINE', 'gpt-4-turbo-2024-04-09')
 # DEFAULT_SEARCH_MODEL = os.environ.get('DEFAULT_SEARCH_MODEL', 'gpt-3.5-turbo-1106') gpt-3.5-turbo-16k

@@ -1,50 +1,15 @@
 import os
 import re
-import json
-import base64
 import datetime
-
-import sys
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import config
-from utils.prompt import search_key_word_prompt
-# import jieba
-
-import asyncio
-import tiktoken
 import requests
 import threading
-
-import urllib.parse
 import time as record_time
 from bs4 import BeautifulSoup
+from duckduckgo_search import DDGS
+from googleapiclient.discovery import build
 
+from ..models import chatgpt
 
-from langchain.prompts import PromptTemplate
-from langchain.chat_models import ChatOpenAI
-from langchain.tools import DuckDuckGoSearchResults
-from langchain.chains import LLMChain
-
-# from typing import Optional, List
-# from langchain.llms.base import LLM
-# import g4f
-# class EducationalLLM(LLM):
-
-#     @property
-#     def _llm_type(self) -> str:
-#         return "custom"
-
-#     def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
-#         out = g4f.ChatCompletion.create(
-#             model=config.GPT_ENGINE,
-#             messages=[{"role": "user", "content": prompt}],
-#         )  #
-#         if stop:
-#             stop_indexes = (out.find(s) for s in stop if s in out)
-#             min_stop = min(stop_indexes, default=-1)
-#             if min_stop > -1:
-#                 out = out[:min_stop]
-#         return out
 
 class ThreadWithReturnValue(threading.Thread):
     def run(self):
@@ -131,14 +96,12 @@ def jina_ai_Web_crawler(url: str, isSearch=False) -> str:
     # print(result + "\n\n")
     return result
 
-def getddgsearchurl(result, numresults=4):
+def getddgsearchurl(query, max_results=4):
     try:
-        search = DuckDuckGoSearchResults(num_results=numresults)
-        webresult = search.run(result)
-        # print("ddgwebresult", webresult)
+        webresult = DDGS().text(query, max_results=max_results)
         if webresult == None:
             return []
-        urls = re.findall(r"(https?://\S+)\]", webresult, re.MULTILINE)
+        urls = [result['href'] for result in webresult]
     except Exception as e:
         print('\033[31m')
         print("duckduckgo error", e)
@@ -147,9 +110,10 @@ def getddgsearchurl(result, numresults=4):
     # print("ddg urls", urls)
     return urls
 
-from googleapiclient.discovery import build
 def getgooglesearchurl(result, numresults=3):
     urls = []
+    if os.environ.get('GOOGLE_API_KEY', None) == None and os.environ.get('GOOGLE_CSE_ID', None) == None:
+        return urls
     try:
         service = build("customsearch", "v1", developerKey=os.environ.get('GOOGLE_API_KEY', None))
         res = service.cse().list(q=result, cx=os.environ.get('GOOGLE_CSE_ID', None)).execute()
@@ -161,7 +125,6 @@ def getgooglesearchurl(result, numresults=3):
         print('\033[0m')
         if "rateLimitExceeded" in str(e):
             print("Google API 每日调用频率已达上限，请明日再试！")
-            config.USE_GOOGLE = False
     # print("google urls", urls)
     return urls
 
@@ -192,54 +155,21 @@ def sort_by_time(urls):
 
     return sorted_urls
 
-def get_search_url(prompt, chainllm):
-    urls_set = []
-
-    keyword_prompt = PromptTemplate(
-        input_variables=["source"],
-        template=search_key_word_prompt,
-    )
-    key_chain = LLMChain(llm=chainllm, prompt=keyword_prompt)
-    keyword_google_search_thread = ThreadWithReturnValue(target=key_chain.run, args=({"source": prompt},))
-    keyword_google_search_thread.start()
-    keywords = keyword_google_search_thread.join().split('\n')[-3:]
-    print("keywords", keywords)
-    keywords = [item.replace("三行关键词是：", "") for item in keywords if "\\x" not in item if item != ""]
-
-    keywords = [prompt] + keywords
-    keywords = keywords[:3]
-    # if len(keywords) == 1:
-    #     keywords = keywords * 3
-    print("select keywords", keywords)
-
-    # # seg_list = jieba.cut_for_search(prompt)  # 搜索引擎模式
-    # seg_list = jieba.cut(prompt, cut_all=True)
-    # result = " ".join(seg_list)
-    # keywords = [result] * 3
-    # print("keywords", keywords)
+def get_search_url(keywords, search_url_num):
+    yield "🌐 正在网上挑选最相关的信息源，请稍候..."
 
     search_threads = []
-    urls_set = []
-    if len(keywords) == 3:
-        search_url_num = 4
-    if len(keywords) == 2:
-        search_url_num = 6
-    if len(keywords) == 1:
-        search_url_num = 12
-    # print(keywords)
-    yield "🌐 正在网上挑选最相关的信息源，请稍候..."
-    if config.USE_GOOGLE:
-        search_thread = ThreadWithReturnValue(target=getgooglesearchurl, args=(keywords[0],search_url_num,))
-        search_thread.start()
-        search_threads.append(search_thread)
-        keywords.pop(0)
-    # print(keywords)
+    search_thread = ThreadWithReturnValue(target=getgooglesearchurl, args=(keywords[0],search_url_num,))
+    search_thread.start()
+    search_threads.append(search_thread)
+    keywords.pop(0)
+
     for keyword in keywords:
         search_thread = ThreadWithReturnValue(target=getddgsearchurl, args=(keyword,search_url_num,))
         search_thread.start()
         search_threads.append(search_thread)
-    # exit(0)
 
+    urls_set = []
     for t in search_threads:
         tmp = t.join()
         urls_set += tmp
@@ -260,28 +190,12 @@ def concat_url(threads):
             url_result.append(tmp)
     return url_result
 
-def cut_message(message: str, max_tokens: int):
-    tiktoken.get_encoding("cl100k_base")
-    encoding = tiktoken.encoding_for_model(config.GPT_ENGINE)
-    encode_text = encoding.encode(message)
-    if len(encode_text) > max_tokens:
-        encode_text = encode_text[:max_tokens]
-        message = encoding.decode(encode_text)
-    encode_text = encoding.encode(message)
-    return message, len(encode_text)
-
-def get_url_text_list(prompt, chatgpt_api_url):
+def get_url_text_list(keywords, search_url_num):
     start_time = record_time.time()
     yield "🌐 正在搜索您的问题，提取关键词..."
 
-    # if config.PLUGINS["USE_G4F"]:
-    #     chainllm = EducationalLLM()
-    # else:
-    #     chainllm = ChatOpenAI(temperature=config.temperature, openai_api_base=config.bot_api_url.v1_url, model_name=config.GPT_ENGINE, openai_api_key=config.API)
-    chainllm = ChatOpenAI(temperature=config.temperature, openai_api_base=chatgpt_api_url, model_name=config.GPT_ENGINE, openai_api_key=config.API)
-
     # url_set_list, url_pdf_set_list = get_search_url(prompt, chainllm)
-    url_set_list, url_pdf_set_list = yield from get_search_url(prompt, chainllm)
+    url_set_list, url_pdf_set_list = yield from get_search_url(keywords, search_url_num)
 
     yield "🌐 已找到一些有用的链接，正在获取详细内容..."
     threads = []
@@ -303,128 +217,29 @@ def get_url_text_list(prompt, chatgpt_api_url):
 
     return url_text_list
 
-# Plugins 搜索
-def get_search_results(prompt: str, chatgpt_api_url):
+# Plugins 搜索入口
+def get_search_results(prompt: str, keywords):
+    print("keywords", keywords)
+    keywords = [item.replace("三行关键词是：", "") for item in keywords if "\\x" not in item if item != ""]
+    keywords = [prompt] + keywords
+    keywords = keywords[:3]
+    print("select keywords", keywords)
 
-    url_text_list = yield from get_url_text_list(prompt, chatgpt_api_url)
+    if len(keywords) == 3:
+        search_url_num = 4
+    if len(keywords) == 2:
+        search_url_num = 6
+    if len(keywords) == 1:
+        search_url_num = 12
+
+    url_text_list = yield from get_url_text_list(keywords, search_url_num)
     useful_source_text = "\n\n".join(url_text_list)
-
-    # useful_source_text, search_tokens_len = cut_message(useful_source_text, context_max_tokens)
-    # print("search tokens len", search_tokens_len, "\n\n")
-
     return useful_source_text
-
-# Plugins 获取日期时间
-def get_date_time_weekday():
-    import datetime
-    import pytz
-    tz = pytz.timezone('Asia/Shanghai')  # 为东八区设置时区
-    now = datetime.datetime.now(tz)  # 获取东八区当前时间
-    weekday = now.weekday()
-    weekday_str = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'][weekday]
-    return "今天是：" + str(now.date()) + "，现在的时间是：" + str(now.time())[:-7] + "，" + weekday_str
-
-# Plugins 使用函数
-def get_version_info():
-    import subprocess
-    current_directory = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    result = subprocess.run(['git', '-C', current_directory, 'log', '-1'], stdout=subprocess.PIPE)
-    output = result.stdout.decode()
-    return output
-
-
-
-# 公用函数
-def encode_image(image_path):
-  with open(image_path, "rb") as image_file:
-    return base64.b64encode(image_file.read()).decode('utf-8')
-
-def get_doc_from_url(url):
-    filename = urllib.parse.unquote(url.split("/")[-1])
-    response = requests.get(url, stream=True)
-    with open(filename, 'wb') as f:
-        for chunk in response.iter_content(chunk_size=1024):
-            f.write(chunk)
-    return filename
-
-def get_encode_image(image_url):
-    filename = get_doc_from_url(image_url)
-    image_path = os.getcwd() + "/" + filename
-    base64_image = encode_image(image_path)
-    prompt = f"data:image/jpeg;base64,{base64_image}"
-    os.remove(image_path)
-    return prompt
-
-def get_text_token_len(text):
-    tiktoken.get_encoding("cl100k_base")
-    encoding = tiktoken.encoding_for_model(config.GPT_ENGINE)
-    encode_text = encoding.encode(text)
-    return len(encode_text)
-
-def Document_extract(docurl):
-    filename = get_doc_from_url(docurl)
-    docpath = os.getcwd() + "/" + filename
-    if filename[-3:] == "pdf":
-        from pdfminer.high_level import extract_text
-        text = extract_text(docpath)
-    if filename[-3:] == "txt":
-        with open(docpath, 'r') as f:
-            text = f.read()
-    prompt = (
-        "Here is the document, inside <document></document> XML tags:"
-        "<document>"
-        "{}"
-        "</document>"
-    ).format(text)
-    os.remove(docpath)
-    return prompt
-
-def check_json(json_data):
-    while True:
-        try:
-            json.loads(json_data)
-            break
-        except json.decoder.JSONDecodeError as e:
-            print("JSON error：", e)
-            print("JSON body", repr(json_data))
-            if "Invalid control character" in str(e):
-                json_data = json_data.replace("\n", "\\n")
-            if "Unterminated string starting" in str(e):
-                json_data += '"}'
-            if "Expecting ',' delimiter" in str(e):
-                json_data += '}'
-            if "Expecting value: line 1 column 1" in str(e):
-                json_data = '{"prompt": ' + json.dumps(json_data) + '}'
-    return json_data
-
-def is_surrounded_by_chinese(text, index):
-    left_char = text[index - 1]
-    if 0 < index < len(text) - 1:
-        right_char = text[index + 1]
-        return '\u4e00' <= left_char <= '\u9fff' or '\u4e00' <= right_char <= '\u9fff'
-    if index == len(text) - 1:
-        return '\u4e00' <= left_char <= '\u9fff'
-    return False
-
-def replace_char(string, index, new_char):
-    return string[:index] + new_char + string[index+1:]
-
-def claude_replace(text):
-    Punctuation_mapping = {",": "，", ":": "：", "!": "！", "?": "？", ";": "；"}
-    key_list = list(Punctuation_mapping.keys())
-    for i in range(len(text)):
-        if is_surrounded_by_chinese(text, i) and (text[i] in key_list):
-            text = replace_char(text, i, Punctuation_mapping[text[i]])
-    return text
 
 if __name__ == "__main__":
     os.system("clear")
-    print(get_date_time_weekday())
-    # print(get_version_info())
-    print(get_search_results("今天的微博热搜有哪些？", 1000))
-
-    # from langchain.agents import get_all_tool_names
-    # print(get_all_tool_names())
+    from ModelMerge.models import chatgpt
+    print(get_search_results("今天的微博热搜有哪些？", chatgpt.chatgpt_api_url.v1_url))
 
     # # 搜索
 

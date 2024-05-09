@@ -11,8 +11,10 @@ import requests
 import tiktoken
 
 # import config
-from ..utils.plugins import check_json, Web_crawler, cut_message, get_search_results
+from ..utils.scripts import check_json, cut_message
+from ..utils.prompt import search_key_word_prompt
 from ..tools.function_call import function_call_list
+from ..plugins.websearch import Web_crawler, get_search_results
 
 def get_filtered_keys_from_object(obj: object, *keys: str) -> Set[str]:
     """
@@ -35,21 +37,6 @@ def get_filtered_keys_from_object(obj: object, *keys: str) -> Set[str]:
     # Only return specified keys that are in class_keys
     return {key for key in keys if key in class_keys}
 
-class openaiAPI:
-    def __init__(
-        self,
-        api_url: str = (os.environ.get("API_URL") or "https://api.openai.com/v1/chat/completions"),
-    ):
-        from urllib.parse import urlparse, urlunparse
-        self.source_api_url: str = api_url
-        parsed_url = urlparse(self.source_api_url)
-        self.base_url: str = urlunparse(parsed_url[:2] + ("",) * 4)
-        self.v1_url: str = urlunparse(parsed_url[:2] + ("/v1",) + ("",) * 3)
-        self.chat_url: str = urlunparse(parsed_url[:2] + ("/v1/chat/completions",) + ("",) * 3)
-        self.image_url: str = urlunparse(parsed_url[:2] + ("/v1/images/generations",) + ("",) * 3)
-
-chatgpt_api_url = openaiAPI()
-
 class chatgpt(BaseLLM):
     """
     Official ChatGPT API
@@ -59,6 +46,8 @@ class chatgpt(BaseLLM):
         self,
         api_key: str,
         engine: str = os.environ.get("GPT_ENGINE") or "gpt-3.5-turbo",
+        api_url: str = (os.environ.get("API_URL") or "https://api.openai.com/v1/chat/completions"),
+        system_prompt: str = "You are ChatGPT, a large language model trained by OpenAI. Respond conversationally",
         proxy: str = None,
         timeout: float = 600,
         max_tokens: int = None,
@@ -68,12 +57,11 @@ class chatgpt(BaseLLM):
         frequency_penalty: float = 0.0,
         reply_count: int = 1,
         truncate_limit: int = None,
-        system_prompt: str = "You are ChatGPT, a large language model trained by OpenAI. Respond conversationally",
     ) -> None:
         """
         Initialize Chatbot with API key (from https://platform.openai.com/account/api-keys)
         """
-        super().__init__(api_key, engine, proxy, timeout, max_tokens, temperature, top_p, presence_penalty, frequency_penalty, reply_count, truncate_limit, system_prompt)
+        super().__init__(api_key, engine, api_url, system_prompt, proxy, timeout, max_tokens, temperature, top_p, presence_penalty, frequency_penalty, reply_count, truncate_limit)
         self.max_tokens: int = max_tokens or (
             4096
             if "gpt-4-1106-preview" in engine or "gpt-4-0125-preview" in engine or "gpt-4-turbo" in engine or "gpt-3.5-turbo-1106" in engine or "claude" in engine
@@ -110,7 +98,7 @@ class chatgpt(BaseLLM):
             ],
         }
         self.function_calls_counter = {}
-        self.function_call_max_loop = 10
+        self.function_call_max_loop = 3
         # self.encode_web_text_list = []
 
         if self.get_token_count("default") > self.max_tokens:
@@ -167,7 +155,7 @@ class chatgpt(BaseLLM):
         """
         while True:
             json_post = self.get_post_body(prompt, role, convo_id, model, pass_history, **kwargs)
-            url = chatgpt_api_url.chat_url
+            url = self.api_url.chat_url
             if "gpt-4" in self.engine or "claude" in self.engine or (CUSTOM_MODELS and self.engine in CUSTOM_MODELS):
                 message_token = {
                     "total": self.get_token_count(convo_id),
@@ -351,12 +339,10 @@ class chatgpt(BaseLLM):
         print("model_max_tokens", model_max_tokens)
         json_post["max_tokens"] = model_max_tokens
 
-        url = chatgpt_api_url.chat_url
-        headers = {"Authorization": f"Bearer {kwargs.get('api_key', self.api_key)}"}
         try:
             response = self.session.post(
-                url,
-                headers=headers,
+                self.api_url.chat_url,
+                headers={"Authorization": f"Bearer {kwargs.get('api_key', self.api_key)}"},
                 json=json_post,
                 timeout=kwargs.get("timeout", self.timeout),
                 stream=True,
@@ -380,7 +366,7 @@ class chatgpt(BaseLLM):
         for line in response.iter_lines():
             if not line:
                 continue
-            # Remove "data: "
+            # print("line", line.decode("utf-8"))
             if line.decode("utf-8")[:6] == "data: ":
                 line = line.decode("utf-8")[6:]
             else:
@@ -398,7 +384,7 @@ class chatgpt(BaseLLM):
             delta = choices[0].get("delta")
             if not delta:
                 continue
-            if "role" in delta:
+            if "role" in delta and response_role == None:
                 response_role = delta["role"]
             if "content" in delta and delta["content"]:
                 need_function_call = False
@@ -428,8 +414,10 @@ class chatgpt(BaseLLM):
                 print("\033[32m function_call", function_call_name, "max token:", function_call_max_tokens, "\033[0m")
                 if function_call_name == "get_search_results":
                     prompt = json.loads(function_full_response)["prompt"]
-                    function_response = yield from eval(function_call_name)(prompt, chatgpt_api_url.v1_url)
-                    function_response, text_len = cut_message(function_response, function_call_max_tokens)
+                    llm = BaseLLM(api_key=self.api_key, api_url=self.api_url.source_api_url , engine=self.engine, system_prompt=self.system_prompt)
+                    keywords = llm.ask(search_key_word_prompt.format(source=prompt)).split("\n")
+                    function_response = yield from eval(function_call_name)(prompt, keywords)
+                    function_response, text_len = cut_message(function_response, function_call_max_tokens, self.engine)
                     function_response = (
                         f"You need to response the following question: {prompt}. Search results is provided inside <Search_results></Search_results> XML tags. Your task is to think about the question step by step and then answer the above question in {LANGUAGE} based on the Search results provided. Please response in {LANGUAGE} and adopt a style that is logical, in-depth, and detailed. Note: In order to make the answer appear highly professional, you should be an expert in textual analysis, aiming to make the answer precise and comprehensive. Directly response markdown format, without using markdown code blocks"
                         "Here is the Search results, inside <Search_results></Search_results> XML tags:"
@@ -444,7 +432,7 @@ class chatgpt(BaseLLM):
                     print("\n\nurl", url)
                     # function_response = jina_ai_Web_crawler(url)
                     function_response = Web_crawler(url)
-                    function_response, text_len = cut_message(function_response, function_call_max_tokens)
+                    function_response, text_len = cut_message(function_response, function_call_max_tokens, self.engine)
                     function_response = (
                         "Here is the documentation, inside <document></document> XML tags:"
                         "<document>"
@@ -453,10 +441,10 @@ class chatgpt(BaseLLM):
                     ).format(function_response)
                 if function_call_name == "get_date_time_weekday":
                     function_response = eval(function_call_name)()
-                    function_response, text_len = cut_message(function_response, function_call_max_tokens)
+                    function_response, text_len = cut_message(function_response, function_call_max_tokens, self.engine)
                 if function_call_name == "get_version_info":
                     function_response = eval(function_call_name)()
-                    function_response, text_len = cut_message(function_response, function_call_max_tokens)
+                    function_response, text_len = cut_message(function_response, function_call_max_tokens, self.engine)
             else:
                 function_response = "抱歉，直接告诉用户，无法找到相关信息"
             response_role = "function"
@@ -498,7 +486,7 @@ class chatgpt(BaseLLM):
         # Get response
         async with self.aclient.stream(
             "post",
-            chatgpt_api_url.chat_url,
+            self.api_url.chat_url,
             headers={"Authorization": f"Bearer {kwargs.get('api_key', self.api_key)}"},
             json={
                 "model": model or self.engine,

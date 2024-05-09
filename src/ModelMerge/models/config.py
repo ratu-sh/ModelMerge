@@ -1,14 +1,10 @@
 import os
+import json
 import httpx
 import requests
 from pathlib import Path
 
 from ..utils import prompt
-
-
-
-# if config.CUSTOM_MODELS_LIST:
-#     ENGINES.extend(config.CUSTOM_MODELS_LIST)
 
 ENGINES = [
     "gpt-3.5-turbo",
@@ -40,6 +36,7 @@ ENGINES = [
 CUSTOM_MODELS = os.environ.get('CUSTOM_MODELS', None)
 if CUSTOM_MODELS:
     CUSTOM_MODELS_LIST = [id for id in CUSTOM_MODELS.split(",")]
+    ENGINES.extend(CUSTOM_MODELS_LIST)
 else:
     CUSTOM_MODELS_LIST = None
 
@@ -53,12 +50,26 @@ PLUGINS = {
 
 LANGUAGE = os.environ.get('LANGUAGE', 'Simplified Chinese')
 
+class BaseAPI:
+    def __init__(
+        self,
+        api_url: str = (os.environ.get("API_URL") or "https://api.openai.com/v1/chat/completions"),
+    ):
+        from urllib.parse import urlparse, urlunparse
+        self.source_api_url: str = api_url
+        parsed_url = urlparse(self.source_api_url)
+        self.base_url: str = urlunparse(parsed_url[:2] + ("",) * 4)
+        self.v1_url: str = urlunparse(parsed_url[:2] + ("/v1",) + ("",) * 3)
+        self.chat_url: str = urlunparse(parsed_url[:2] + ("/v1/chat/completions",) + ("",) * 3)
+        self.image_url: str = urlunparse(parsed_url[:2] + ("/v1/images/generations",) + ("",) * 3)
 
 class BaseLLM:
     def __init__(
         self,
         api_key: str,
         engine: str = os.environ.get("GPT_ENGINE") or "gpt-3.5-turbo",
+        api_url: str = (os.environ.get("API_URL") or "https://api.openai.com/v1/chat/completions"),
+        system_prompt: str = prompt.chatgpt_system_prompt,
         proxy: str = None,
         timeout: float = 600,
         max_tokens: int = None,
@@ -68,10 +79,10 @@ class BaseLLM:
         frequency_penalty: float = 0.0,
         reply_count: int = 1,
         truncate_limit: int = None,
-        system_prompt: str = prompt.chatgpt_system_prompt,
     ) -> None:
-        self.engine: str = engine
         self.api_key: str = api_key
+        self.engine: str = engine
+        self.api_url: str = BaseAPI(api_url)
         self.system_prompt: str = system_prompt
         self.max_tokens: int = max_tokens
         self.truncate_limit: int = truncate_limit
@@ -191,7 +202,54 @@ class BaseLLM:
         """
         Ask a question
         """
-        pass
+        response = self.session.post(
+            self.api_url.chat_url,
+            headers={"Authorization": f"Bearer {kwargs.get('api_key', self.api_key)}"},
+            json={
+                "model": model or self.engine,
+                "messages": [{"role": "system","content": self.system_prompt},{"role": role, "content": prompt}],
+                "stream": True,
+                "temperature": kwargs.get("temperature", self.temperature),
+                "top_p": kwargs.get("top_p", self.top_p),
+                "presence_penalty": kwargs.get(
+                    "presence_penalty",
+                    self.presence_penalty,
+                ),
+                "frequency_penalty": kwargs.get(
+                    "frequency_penalty",
+                    self.frequency_penalty,
+                ),
+                "n": kwargs.get("n", self.reply_count),
+                "user": role,
+                "max_tokens": kwargs.get("max_tokens", self.max_tokens),
+            },
+            timeout=kwargs.get("timeout", self.timeout),
+            stream=True,
+        )
+        if response.status_code != 200:
+            raise Exception(f"{response.status_code} {response.reason} {response.text}")
+        full_response: str = ""
+        for line in response.iter_lines():
+            line = line.strip()
+            if not line:
+                continue
+            line = line.decode("utf-8")[6:]
+            # print("line", line)
+            if line == "[DONE]":
+                break
+            resp: dict = json.loads(line)
+            if "error" in resp:
+                raise Exception(f"{resp['error']}")
+            choices = resp.get("choices")
+            if not choices:
+                continue
+            delta: dict[str, str] = choices[0].get("delta")
+            if not delta:
+                continue
+            if "content" in delta:
+                content: str = delta["content"]
+                full_response += content
+                yield content
 
     async def ask_async(
         self,
@@ -213,13 +271,22 @@ class BaseLLM:
         role: str = "user",
         convo_id: str = "default",
         model: str = None,
-        pass_history: bool = True,
+        pass_history: bool = False,
         **kwargs,
     ) -> str:
         """
         Non-streaming ask
         """
-        pass
+        response = self.ask_stream(
+            prompt=prompt,
+            role=role,
+            convo_id=convo_id,
+            model=model,
+            pass_history=pass_history,
+            **kwargs,
+        )
+        full_response: str = "".join(response)
+        return full_response
 
     def rollback(self, n: int = 1, convo_id: str = "default") -> None:
         """
