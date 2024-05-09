@@ -4,7 +4,7 @@ import json
 import copy
 from pathlib import Path
 from typing import AsyncGenerator, Set
-from .config import BaseLLM, ENGINES, CUSTOM_MODELS, PLUGINS, LANGUAGE
+from .config import BaseLLM, PLUGINS, LANGUAGE
 
 import httpx
 import requests
@@ -156,12 +156,12 @@ class chatgpt(BaseLLM):
         while True:
             json_post = self.get_post_body(prompt, role, convo_id, model, pass_history, **kwargs)
             url = self.api_url.chat_url
-            if "gpt-4" in self.engine or "claude" in self.engine or (CUSTOM_MODELS and self.engine in CUSTOM_MODELS):
-                message_token = {
-                    "total": self.get_token_count(convo_id),
-                }
-            else:
-                message_token = self.get_message_token(url, json_post)
+            # if "gpt-4" in self.engine or "claude" in self.engine or (CUSTOM_MODELS and self.engine in CUSTOM_MODELS):
+            message_token = {
+                "total": self.get_token_count(convo_id),
+            }
+            # else:
+            #     message_token = self.get_message_token(url, json_post)
             print("message_token", message_token, "truncate_limit", self.truncate_limit)
             if (
                 message_token["total"] > self.truncate_limit
@@ -196,10 +196,6 @@ class chatgpt(BaseLLM):
         """
         Get token count
         """
-        if self.engine not in ENGINES:
-            raise NotImplementedError(
-                f"Engine {self.engine} is not supported. Select from {ENGINES}",
-            )
         encoding = tiktoken.get_encoding("cl100k_base")
 
         num_tokens = 0
@@ -289,7 +285,7 @@ class chatgpt(BaseLLM):
             "n": kwargs.get("n", self.reply_count),
             "user": role,
         }
-        if CUSTOM_MODELS and self.engine in CUSTOM_MODELS and "gpt-" not in self.engine and "claude-3" not in self.engine:
+        if "gpt-" not in self.engine and "claude-3" not in self.engine:
             return json_post_body
         json_post_body.update(copy.deepcopy(body))
         json_post_body.update(copy.deepcopy(function_call_list["base"]))

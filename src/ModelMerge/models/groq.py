@@ -1,31 +1,23 @@
-class groqbot:
+import os
+import json
+import requests
+import tiktoken
+
+from .config import BaseLLM
+
+class groq(BaseLLM):
     def __init__(
         self,
         api_key: str,
         engine: str = os.environ.get("GPT_ENGINE") or "llama3-70b-8192",
+        api_url: str = "https://api.groq.com/openai/v1/chat/completions",
+        system_prompt: str = "You are ChatGPT, a large language model trained by OpenAI. Respond conversationally",
         temperature: float = 0.5,
         top_p: float = 1,
-        chat_url: str = "https://api.groq.com/openai/v1/chat/completions",
         timeout: float = 20,
-        system_prompt: str = "You are ChatGPT, a large language model trained by OpenAI. Respond conversationally",
-        **kwargs,
     ):
-        self.api_key: str = api_key
-        self.engine: str = engine
-        self.temperature = temperature
-        self.top_p = top_p
-        self.chat_url = chat_url
-        self.timeout = timeout
-        self.session = requests.Session()
-        self.conversation: dict[str, list[dict]] = {
-            "default": [
-                {
-                    "role": "system",
-                    "content": system_prompt,
-                },
-            ],
-        }
-        self.system_prompt = system_prompt
+        super().__init__(api_key, engine, api_url, system_prompt, timeout=timeout, temperature=temperature, top_p=top_p)
+        self.api_url = api_url
 
     def add_to_conversation(
         self,
@@ -37,7 +29,6 @@ class groqbot:
         """
         Add a message to the conversation
         """
-
         if convo_id not in self.conversation or pass_history == False:
             self.reset(convo_id=convo_id)
         self.conversation[convo_id].append({"role": role, "content": message})
@@ -66,10 +57,6 @@ class groqbot:
         """
         Get token count
         """
-        if self.engine not in ENGINES:
-            raise NotImplementedError(
-                f"Engine {self.engine} is not supported. Select from {ENGINES}",
-            )
         # tiktoken.model.MODEL_TO_ENCODING["mixtral-8x7b-32768"] = "cl100k_base"
         encoding = tiktoken.get_encoding("cl100k_base")
 
@@ -102,7 +89,7 @@ class groqbot:
         # self.__truncate_conversation(convo_id=convo_id)
         # print(self.conversation[convo_id])
 
-        url = self.chat_url
+        url = self.api_url
         headers = {
             "Authorization": f"Bearer {kwargs.get('GROQ_API_KEY', self.api_key)}",
             "Content-Type": "application/json",
@@ -175,5 +162,3 @@ class groqbot:
                 full_response += content
                 yield content
         self.add_to_conversation(full_response, response_role, convo_id=convo_id)
-        # print(repr(self.conversation.Conversation(convo_id)))
-        # print("total tokens:", self.get_token_count(convo_id))

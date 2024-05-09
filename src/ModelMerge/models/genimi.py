@@ -3,7 +3,7 @@ import json
 import requests
 import tiktoken
 
-from .config import BaseLLM, ENGINES
+from .config import BaseLLM
 
 class gemini(BaseLLM):
     def __init__(
@@ -62,10 +62,6 @@ class gemini(BaseLLM):
         """
         Get token count
         """
-        if self.engine not in ENGINES:
-            raise NotImplementedError(
-                f"Engine {self.engine} is not supported. Select from {ENGINES}",
-            )
         encoding = tiktoken.get_encoding("cl100k_base")
 
         num_tokens = 0

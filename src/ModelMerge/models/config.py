@@ -6,46 +6,11 @@ from pathlib import Path
 
 from ..utils import prompt
 
-ENGINES = [
-    "gpt-3.5-turbo",
-    "gpt-3.5-turbo-16k",
-    "gpt-3.5-turbo-0301",
-    "gpt-3.5-turbo-0613",
-    "gpt-3.5-turbo-1106",
-    "gpt-3.5-turbo-16k-0613",
-    "gpt-4",
-    "gpt-4-0314",
-    "gpt-4-32k",
-    "gpt-4-32k-0314",
-    "gpt-4-0613",
-    "gpt-4-32k-0613",
-    "gpt-4-1106-preview",
-    "gpt-4-0125-preview",
-    "gpt-4-turbo-preview",
-    "gpt-4-turbo-2024-04-09",
-    "mixtral-8x7b-32768",
-    "llama2-70b-4096",
-    "llama3-70b-8192",
-    "claude-2.1",
-    "claude-3-sonnet-20240229",
-    "claude-3-haiku-20240307",
-    "claude-3-opus-20240229",
-    "gemini-1.5-pro-latest",
-]
-
-CUSTOM_MODELS = os.environ.get('CUSTOM_MODELS', None)
-if CUSTOM_MODELS:
-    CUSTOM_MODELS_LIST = [id for id in CUSTOM_MODELS.split(",")]
-    ENGINES.extend(CUSTOM_MODELS_LIST)
-else:
-    CUSTOM_MODELS_LIST = None
-
 PLUGINS = {
-    "SEARCH_USE_GPT": (os.environ.get('SEARCH_USE_GPT', "True") == "False") == False,
-    # "USE_G4F": (os.environ.get('USE_G4F', "False") == "False") == False,
-    "DATE": True,
+    "SEARCH": (os.environ.get('SEARCH', "True") == "False") == False,
     "URL": True,
-    "VERSION": True,
+    "DATE": False,
+    "VERSION": False,
 }
 
 LANGUAGE = os.environ.get('LANGUAGE', 'Simplified Chinese')

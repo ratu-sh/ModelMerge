@@ -18,11 +18,6 @@ API_URL = os.environ.get('API_URL', 'https://api.openai.com/v1/chat/completions'
 LANGUAGE = os.environ.get('LANGUAGE', 'Simplified Chinese')
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', None)
 GOOGLE_AI_API_KEY = os.environ.get('GOOGLE_AI_API_KEY', None)
-CUSTOM_MODELS = os.environ.get('CUSTOM_MODELS', None)
-if CUSTOM_MODELS:
-    CUSTOM_MODELS_LIST = [id for id in CUSTOM_MODELS.split(",")]
-else:
-    CUSTOM_MODELS_LIST = None
 
 
 from datetime import datetime
@@ -63,7 +58,7 @@ if GROUP_LIST:
     GROUP_LIST = [int(id) for id in GROUP_LIST.split(",")]
 
 PLUGINS = {
-    "SEARCH_USE_GPT": (os.environ.get('SEARCH_USE_GPT', "True") == "False") == False,
+    "SEARCH": (os.environ.get('SEARCH', "True") == "False") == False,
     # "USE_G4F": (os.environ.get('USE_G4F', "False") == "False") == False,
     "DATE": True,
     "URL": True,
@@ -110,12 +105,3 @@ if GOOGLE_AI_API_KEY:
     initial_model.extend([
         "gemini-1.5-pro-latest",
     ])
-
-if CUSTOM_MODELS_LIST:
-    delete_models = [model[1:] for model in CUSTOM_MODELS_LIST if model[0] == "-"]
-    for target in delete_models:
-        for model in initial_model:
-            if target in model:
-                initial_model.remove(model)
-
-    initial_model.extend([model for model in CUSTOM_MODELS_LIST if model not in initial_model and model[0] != "-"])

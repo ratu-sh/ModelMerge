@@ -4,7 +4,7 @@ import json
 import tiktoken
 import requests
 
-from .config import BaseLLM, ENGINES
+from .config import BaseLLM
 
 class claudeConversation(dict):
     def Conversation(self, index):
@@ -65,10 +65,6 @@ class claude(BaseLLM):
         """
         Get token count
         """
-        if self.engine not in ENGINES:
-            raise NotImplementedError(
-                f"Engine {self.engine} is not supported. Select from {ENGINES}",
-            )
         tiktoken.model.MODEL_TO_ENCODING["claude-2.1"] = "cl100k_base"
         encoding = tiktoken.encoding_for_model(self.engine)
 
@@ -213,10 +209,6 @@ class claude3(BaseLLM):
         """
         Get token count
         """
-        if self.engine not in ENGINES:
-            raise NotImplementedError(
-                f"Engine {self.engine} is not supported. Select from {ENGINES}",
-            )
         tiktoken.model.MODEL_TO_ENCODING["claude-2.1"] = "cl100k_base"
         encoding = tiktoken.encoding_for_model(self.engine)
 

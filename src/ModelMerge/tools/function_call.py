@@ -27,7 +27,7 @@ function_call_list = \
             ]
         }
     },
-    "SEARCH_USE_GPT": {
+    "SEARCH": {
         "name": "get_search_results",
         "description": "Search Google to enhance knowledge.",
         "parameters": {
