@@ -285,8 +285,6 @@ class chatgpt(BaseLLM):
             "n": kwargs.get("n", self.reply_count),
             "user": role,
         }
-        if "gpt-" not in self.engine and "claude-3" not in self.engine:
-            return json_post_body
         json_post_body.update(copy.deepcopy(body))
         json_post_body.update(copy.deepcopy(function_call_list["base"]))
         for item in PLUGINS.keys():
@@ -323,7 +321,6 @@ class chatgpt(BaseLLM):
             self.reset(convo_id=convo_id, system_prompt=self.system_prompt)
         self.add_to_conversation(prompt, role, convo_id=convo_id, function_name=function_name)
         json_post, message_token = self.truncate_conversation(prompt, role, convo_id, model, pass_history, **kwargs)
-        print(json.dumps(json_post, indent=4, ensure_ascii=False))
         # print(self.conversation[convo_id])
 
         if self.engine == "gpt-4-1106-preview" or "gpt-4-0125-preview" in self.engine or "gpt-4-turbo" in self.engine or "claude" in self.engine:
@@ -334,23 +331,29 @@ class chatgpt(BaseLLM):
             model_max_tokens = min(kwargs.get("max_tokens", self.max_tokens), self.max_tokens - message_token["total"])
         print("model_max_tokens", model_max_tokens)
         json_post["max_tokens"] = model_max_tokens
-        try:
-            response = self.session.post(
-                self.api_url.chat_url,
-                headers={"Authorization": f"Bearer {kwargs.get('api_key', self.api_key)}"},
-                json=json_post,
-                timeout=kwargs.get("timeout", self.timeout),
-                stream=True,
-            )
-        except ConnectionError:
-            print("连接错误，请检查服务器状态或网络连接。")
-            return
-        except requests.exceptions.ReadTimeout:
-            print("请求超时，请检查网络连接或增加超时时间。{e}")
-            return
-        except Exception as e:
-            print(f"发生了未预料的错误: {e}")
-            return
+        for _ in range(2):
+            print(json.dumps(json_post, indent=4, ensure_ascii=False))
+            try:
+                response = self.session.post(
+                    self.api_url.chat_url,
+                    headers={"Authorization": f"Bearer {kwargs.get('api_key', self.api_key)}"},
+                    json=json_post,
+                    timeout=kwargs.get("timeout", self.timeout),
+                    stream=True,
+                )
+            except ConnectionError:
+                print("连接错误，请检查服务器状态或网络连接。")
+                return
+            except requests.exceptions.ReadTimeout:
+                print("请求超时，请检查网络连接或增加超时时间。{e}")
+                return
+            except Exception as e:
+                print(f"发生了未预料的错误: {e}")
+                return
+            if response.status_code == 400:
+                del json_post["function_call"]
+                del json_post["functions"]
+                continue
         if response.status_code != 200:
             raise Exception(f"{response.status_code} {response.reason} {response.text}")
         response_role: str = None
