@@ -331,6 +331,7 @@ class chatgpt(BaseLLM):
             model_max_tokens = min(kwargs.get("max_tokens", self.max_tokens), self.max_tokens - message_token["total"])
         print("model_max_tokens", model_max_tokens)
         json_post["max_tokens"] = model_max_tokens
+        print("api_url", self.api_url.chat_url)
         for _ in range(2):
             print(json.dumps(json_post, indent=4, ensure_ascii=False))
             try:
