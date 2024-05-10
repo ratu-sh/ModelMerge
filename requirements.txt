@@ -1,7 +1,7 @@
-tiktoken==0.6.0
-beautifulsoup4
-google-api-python-client==2.128.0
-openai==0.28.1
-duckduckgo-search==5.3.1
 lxml
+requests
 pdfminer.six
+beautifulsoup4
+tiktoken==0.6.0
+duckduckgo-search==5.3.1
+google-api-python-client==2.128.0

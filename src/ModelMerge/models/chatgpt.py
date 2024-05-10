@@ -657,7 +657,7 @@ class chatgpt(BaseLLM):
                 keys.remove("aclient")
             self.__dict__.update({key: loaded_config[key] for key in keys})
 
-class Imagebot(BaseLLM):
+class dalle3(BaseLLM):
     def __init__(
         self,
         api_key: str,
@@ -667,7 +667,7 @@ class Imagebot(BaseLLM):
         super().__init__(api_key, api_url=api_url, timeout=timeout)
         self.engine: str = "dall-e-3"
 
-    def dall_e_3(
+    def generate(
         self,
         prompt: str,
         model: str = None,
