@@ -23,7 +23,10 @@ class BaseAPI:
         from urllib.parse import urlparse, urlunparse
         self.source_api_url: str = api_url
         parsed_url = urlparse(self.source_api_url)
-        before_v1 = parsed_url.path.split("/v1")[0]
+        if parsed_url.path != '/':
+            before_v1 = parsed_url.path.split("/v1")[0]
+        else:
+            before_v1 = ""
         self.base_url: str = urlunparse(parsed_url[:2] + (before_v1,) + ("",) * 3)
         self.v1_url: str = urlunparse(parsed_url[:2]+ (before_v1 + "/v1",) + ("",) * 3)
         self.chat_url: str = urlunparse(parsed_url[:2] + (before_v1 + "/v1/chat/completions",) + ("",) * 3)
