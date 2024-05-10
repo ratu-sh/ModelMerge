@@ -354,6 +354,8 @@ class chatgpt(BaseLLM):
                 del json_post["function_call"]
                 del json_post["functions"]
                 continue
+            if response.status_code == 200:
+                break
         if response.status_code != 200:
             raise Exception(f"{response.status_code} {response.reason} {response.text}")
         response_role: str = None
