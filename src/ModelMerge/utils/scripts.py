@@ -7,6 +7,7 @@ import urllib.parse
 
 def get_encode_text(text, model_name):
     tiktoken.get_encoding("cl100k_base")
+    model_name = "gpt-3.5-turbo"
     encoding = tiktoken.encoding_for_model(model_name)
     encode_text = encoding.encode(text)
     return encoding, encode_text

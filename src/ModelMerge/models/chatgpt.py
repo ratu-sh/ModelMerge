@@ -364,13 +364,12 @@ class chatgpt(BaseLLM):
         function_call_name: str = ""
         need_function_call: bool = False
         for line in response.iter_lines():
-            if not line:
+            if not line or line.decode("utf-8").startswith(':'):
                 continue
-            # print("line", line.decode("utf-8"))
-            if line.decode("utf-8")[:6] == "data: ":
+            if line.decode("utf-8").startswith('data:'):
                 line = line.decode("utf-8")[6:]
             else:
-                print(line.decode("utf-8"))
+                print("line", line.decode("utf-8"))
                 full_response = json.loads(line.decode("utf-8"))["choices"][0]["message"]["content"]
                 yield full_response
                 break
