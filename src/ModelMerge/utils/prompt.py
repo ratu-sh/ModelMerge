@@ -85,7 +85,9 @@ chatgpt_system_prompt = (
     "You are ChatGPT, a large language model trained by OpenAI. Respond conversationally"
 )
 
-claude_system_prompt = None
+claude_system_prompt = (
+    "You are Claude, a large language model trained by Anthropic. Respond conversationally in {}."
+)
 
 search_system_prompt = (
     "You are ChatGPT, a large language model trained by OpenAI. Respond conversationally in {}."
