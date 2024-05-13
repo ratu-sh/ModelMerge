@@ -75,6 +75,22 @@ function_call_list = \
             "properties": {}
         }
     },
+    "TARVEL": {
+        "name": "get_city_tarvel_info",
+        "description": "Get the city's travel plan by city name.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "type": "string",
+                    "description": "the city to search"
+                }
+            },
+            "required": [
+                "city"
+            ]
+        }
+    },
 }
 def gpt2claude_tools_json(json_dict):
     import copy

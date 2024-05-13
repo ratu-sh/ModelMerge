@@ -1,4 +1,5 @@
 lxml
+execjs
 requests
 pdfminer.six
 beautifulsoup4

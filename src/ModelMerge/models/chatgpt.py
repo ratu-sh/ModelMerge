@@ -15,6 +15,7 @@ from ..utils.scripts import check_json, cut_message
 from ..utils.prompt import search_key_word_prompt
 from ..tools.function_call import function_call_list
 from ..plugins.websearch import Web_crawler, get_search_results
+from ..plugins.tarvel import get_city_tarvel_info
 
 def get_filtered_keys_from_object(obj: object, *keys: str) -> Set[str]:
     """
@@ -366,6 +367,7 @@ class chatgpt(BaseLLM):
         for line in response.iter_lines():
             if not line or line.decode("utf-8").startswith(':'):
                 continue
+            # print("line.decode('utf-8')", line.decode("utf-8"))
             if line.decode("utf-8").startswith('data:'):
                 line = line.decode("utf-8")[6:]
             else:
@@ -440,6 +442,10 @@ class chatgpt(BaseLLM):
                         "{}"
                         "</document>"
                     ).format(function_response)
+                if function_call_name == "get_city_tarvel_info":
+                    city = json.loads(function_full_response)["city"]
+                    function_response = eval(function_call_name)(city)
+                    function_response, text_len = cut_message(function_response, function_call_max_tokens, self.engine)
                 if function_call_name == "get_date_time_weekday":
                     function_response = eval(function_call_name)()
                     function_response, text_len = cut_message(function_response, function_call_max_tokens, self.engine)
