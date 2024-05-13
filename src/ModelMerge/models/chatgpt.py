@@ -76,8 +76,7 @@ class chatgpt(BaseLLM):
             else 4000
         )
         self.truncate_limit: int = truncate_limit or (
-            32000
-            # 126500 Control the number of search characters to prevent excessive spending
+            127500
             if "gpt-4-1106-preview" in engine or "gpt-4-0125-preview" in engine or "gpt-4-turbo" in engine
             else 30500
             if "gpt-4-32k" in engine
@@ -419,6 +418,7 @@ class chatgpt(BaseLLM):
                     llm = BaseLLM(api_key=self.api_key, api_url=self.api_url.source_api_url , engine=self.engine, system_prompt=self.system_prompt)
                     keywords = llm.ask(search_key_word_prompt.format(source=prompt)).split("\n")
                     function_response = yield from eval(function_call_name)(prompt, keywords)
+                    function_call_max_tokens = 32000
                     function_response, text_len = cut_message(function_response, function_call_max_tokens, self.engine)
                     function_response = (
                         f"You need to response the following question: {prompt}. Search results is provided inside <Search_results></Search_results> XML tags. Your task is to think about the question step by step and then answer the above question in {LANGUAGE} based on the Search results provided. Please response in {LANGUAGE} and adopt a style that is logical, in-depth, and detailed. Note: In order to make the answer appear highly professional, you should be an expert in textual analysis, aiming to make the answer precise and comprehensive. Directly response markdown format, without using markdown code blocks"
