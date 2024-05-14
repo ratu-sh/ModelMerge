@@ -65,7 +65,7 @@ class chatgpt(BaseLLM):
         super().__init__(api_key, engine, api_url, system_prompt, proxy, timeout, max_tokens, temperature, top_p, presence_penalty, frequency_penalty, reply_count, truncate_limit)
         self.max_tokens: int = max_tokens or (
             4096
-            if "gpt-4-1106-preview" in engine or "gpt-4-0125-preview" in engine or "gpt-4-turbo" in engine or "gpt-3.5-turbo-1106" in engine or "claude" in engine
+            if "gpt-4-1106-preview" in engine or "gpt-4-0125-preview" in engine or "gpt-4-turbo" in engine or "gpt-3.5-turbo-1106" in engine or "claude" in engine or "gpt-4o" in engine
             else 31000
             if "gpt-4-32k" in engine
             else 7000
@@ -78,7 +78,7 @@ class chatgpt(BaseLLM):
         )
         self.truncate_limit: int = truncate_limit or (
             127500
-            if "gpt-4-1106-preview" in engine or "gpt-4-0125-preview" in engine or "gpt-4-turbo" in engine
+            if "gpt-4-1106-preview" in engine or "gpt-4-0125-preview" in engine or "gpt-4-turbo" in engine or "gpt-4o" in engine
             else 30500
             if "gpt-4-32k" in engine
             else 6500
@@ -289,6 +289,7 @@ class chatgpt(BaseLLM):
         json_post_body.update(copy.deepcopy(function_call_list["base"]))
         for item in PLUGINS.keys():
             try:
+                # print(item, PLUGINS[item])
                 if PLUGINS[item]:
                     json_post_body["functions"].append(function_call_list[item])
             except:
@@ -351,6 +352,7 @@ class chatgpt(BaseLLM):
             except Exception as e:
                 print(f"发生了未预料的错误: {e}")
                 return
+            # print("response.text", response.text)
             if response.status_code == 400:
                 del json_post["function_call"]
                 del json_post["functions"]
