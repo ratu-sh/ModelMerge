@@ -99,6 +99,8 @@ def jina_ai_Web_crawler(url: str, isSearch=False) -> str:
 
 def getddgsearchurl(query, max_results=4):
     try:
+        import time
+        time.sleep(0.5)
         results = []
         with DDGS() as ddgs:
             ddgs_gen = ddgs.text(query, safesearch='Off', timelimit='y', backend="lite")
