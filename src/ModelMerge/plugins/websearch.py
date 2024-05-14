@@ -168,12 +168,13 @@ def get_search_url(keywords, search_url_num):
     search_threads.append(search_thread)
     keywords.pop(0)
 
-    for keyword in keywords:
-        search_thread = ThreadWithReturnValue(target=getddgsearchurl, args=(keyword,search_url_num,))
-        search_thread.start()
-        search_threads.append(search_thread)
-
     urls_set = []
+    for keyword in keywords:
+        urls_set += getddgsearchurl(keyword, search_url_num)
+        # search_thread = ThreadWithReturnValue(target=getddgsearchurl, args=(keyword,search_url_num,))
+        # search_thread.start()
+        # search_threads.append(search_thread)
+
     for t in search_threads:
         tmp = t.join()
         urls_set += tmp
