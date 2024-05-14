@@ -323,13 +323,7 @@ class chatgpt(BaseLLM):
         self.add_to_conversation(prompt, role, convo_id=convo_id, function_name=function_name)
         json_post, message_token = self.truncate_conversation(prompt, role, convo_id, model, pass_history, **kwargs)
         # print(self.conversation[convo_id])
-
-        if self.engine == "gpt-4-1106-preview" or "gpt-4-0125-preview" in self.engine or "gpt-4-turbo" in self.engine or "claude" in self.engine:
-            model_max_tokens = kwargs.get("max_tokens", self.max_tokens)
-        elif self.engine == "gpt-3.5-turbo-1106":
-            model_max_tokens = min(kwargs.get("max_tokens", self.max_tokens), 16385 - message_token["total"])
-        else:
-            model_max_tokens = min(kwargs.get("max_tokens", self.max_tokens), self.max_tokens - message_token["total"])
+        model_max_tokens = kwargs.get("max_tokens", self.max_tokens)
         print("model_max_tokens", model_max_tokens)
         json_post["max_tokens"] = model_max_tokens
         print("api_url", self.api_url.chat_url)
@@ -406,6 +400,7 @@ class chatgpt(BaseLLM):
             function_full_response = check_json(function_full_response)
             print("function_full_response", function_full_response)
             function_response = ""
+            # print(self.function_calls_counter)
             if not self.function_calls_counter.get(function_call_name):
                 self.function_calls_counter[function_call_name] = 1
             else:
@@ -455,7 +450,7 @@ class chatgpt(BaseLLM):
                     function_response = eval(function_call_name)()
                     function_response, text_len = cut_message(function_response, function_call_max_tokens, self.engine)
             else:
-                function_response = "抱歉，直接告诉用户，无法找到相关信息"
+                function_response = "无法找到相关信息，停止使用 tools"
             response_role = "function"
             # print(self.conversation[convo_id][-1])
             if self.conversation[convo_id][-1]["role"] == "function" and self.conversation[convo_id][-1]["name"] == "get_search_results":

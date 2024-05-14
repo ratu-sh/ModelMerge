@@ -23,7 +23,9 @@ bot = chatgpt(api_key=API, api_url=API_URL , engine=GPT_ENGINE, system_prompt=sy
 # bot = gemini(api_key=GOOGLE_AI_API_KEY, engine=GPT_ENGINE, system_prompt=systemprompt)
 # bot = groq(api_key=GROQ_API_KEY, engine=GPT_ENGINE, system_prompt=systemprompt)
 # for text in bot.ask_stream("今天的微博热搜有哪些？"):
+# for text in bot.ask_stream("250m usd = cny"):
+for text in bot.ask_stream("英伟达最早支持杜比视界的显卡是哪一代"):
 # for text in bot.ask_stream("python 删除json里面的键和值"):
-for text in bot.ask_stream("上海有哪些好玩的地方？"):
+# for text in bot.ask_stream("上海有哪些好玩的地方？"):
 # for text in bot.ask_stream("just say test"):
     print(text, end="")
