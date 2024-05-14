@@ -11,7 +11,7 @@ PLUGINS = {
     "URL": True,
     "DATE": False,
     "VERSION": False,
-    "TARVEL": False,
+    "TARVEL": (os.environ.get('TARVEL', "False") == "False") == False,
 }
 
 LANGUAGE = os.environ.get('LANGUAGE', 'Simplified Chinese')
