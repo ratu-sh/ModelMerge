@@ -4,6 +4,7 @@ import datetime
 import requests
 import threading
 import time as record_time
+from itertools import islice
 from bs4 import BeautifulSoup
 from duckduckgo_search import DDGS
 from googleapiclient.discovery import build
@@ -98,16 +99,17 @@ def jina_ai_Web_crawler(url: str, isSearch=False) -> str:
 
 def getddgsearchurl(query, max_results=4):
     try:
-        webresult = DDGS().text(query, max_results=max_results)
-        if webresult == None:
-            return []
-        urls = [result['href'] for result in webresult]
+        results = []
+        with DDGS() as ddgs:
+            ddgs_gen = ddgs.text(query, safesearch='Off', timelimit='y', backend="lite")
+            for r in islice(ddgs_gen, max_results):
+                results.append(r)
+        urls = [result['href'] for result in results]
     except Exception as e:
         print('\033[31m')
         print("duckduckgo error", e)
         print('\033[0m')
         urls = []
-    # print("ddg urls", urls)
     return urls
 
 def getgooglesearchurl(result, numresults=3):

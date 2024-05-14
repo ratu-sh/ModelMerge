@@ -433,12 +433,15 @@ class chatgpt(BaseLLM):
                     # function_response = jina_ai_Web_crawler(url)
                     function_response = Web_crawler(url)
                     function_response, text_len = cut_message(function_response, function_call_max_tokens, self.engine)
-                    function_response = (
-                        "Here is the documentation, inside <document></document> XML tags:"
-                        "<document>"
-                        "{}"
-                        "</document>"
-                    ).format(function_response)
+                    if function_response:
+                        function_response = (
+                            "Here is the documentation, inside <document></document> XML tags:"
+                            "<document>"
+                            "{}"
+                            "</document>"
+                        ).format(function_response)
+                    else:
+                        function_response = "无法找到相关信息，停止使用 tools"
                 if function_call_name == "get_city_tarvel_info":
                     city = json.loads(function_full_response)["city"]
                     function_response = eval(function_call_name)(city)
