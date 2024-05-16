@@ -77,16 +77,16 @@ search_key_word_prompt = (
 )
 
 system_prompt = (
-    "You are ChatGPT, a large language model trained by OpenAI. Respond conversationally in {}. Knowledge cutoff: 2023-12. Current date: [ {} ]"
+    "You are ChatGPT, a large language model trained by OpenAI. Respond conversationally in {}. Use simple characters to represent mathematical symbols. Do not use LaTeX commands. Knowledge cutoff: 2023-12. Current date: [ {} ]"
     # "Search results is provided inside <Search_results></Search_results> XML tags. Your task is to think about my question step by step and then answer my question based on the Search results provided. Please response with a style that is logical, in-depth, and detailed. Note: In order to make the answer appear highly professional, you should be an expert in textual analysis, aiming to make the answer precise and comprehensive. Directly response markdown format, without using markdown code blocks."
 )
 
 chatgpt_system_prompt = (
-    "You are ChatGPT, a large language model trained by OpenAI. Respond conversationally"
+    "You are ChatGPT, a large language model trained by OpenAI. Use simple characters to represent mathematical symbols. Do not use LaTeX commands. Respond conversationally"
 )
 
 claude_system_prompt = (
-    "You are Claude, a large language model trained by Anthropic. Respond conversationally in {}."
+    "You are Claude, a large language model trained by Anthropic. Use simple characters to represent mathematical symbols. Do not use LaTeX commands. Respond conversationally in {}."
 )
 
 search_system_prompt = (
