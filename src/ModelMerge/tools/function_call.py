@@ -91,6 +91,22 @@ function_call_list = \
             ]
         }
     },
+    "IMAGE": {
+        "name": "generate_image",
+        "description": "Generate images based on user descriptions.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "prompt": {
+                    "type": "string",
+                    "description": "the prompt to generate image"
+                }
+            },
+            "required": [
+                "prompt"
+            ]
+        }
+    },
 }
 def gpt2claude_tools_json(json_dict):
     import copy

@@ -446,6 +446,10 @@ class chatgpt(BaseLLM):
                         "{}"
                         "</infomation>"
                     ).format(function_response)
+                if function_call_name == "generate_image":
+                    prompt = json.loads(function_full_response)["prompt"]
+                    function_response = eval(function_call_name)(prompt)
+                    function_response, text_len = cut_message(function_response, function_call_max_tokens, self.engine)
                 if function_call_name == "get_date_time_weekday":
                     function_response = eval(function_call_name)()
                     function_response, text_len = cut_message(function_response, function_call_max_tokens, self.engine)
