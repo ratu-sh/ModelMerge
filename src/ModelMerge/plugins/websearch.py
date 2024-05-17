@@ -9,9 +9,6 @@ from bs4 import BeautifulSoup
 from duckduckgo_search import DDGS
 from googleapiclient.discovery import build
 
-from ..models import chatgpt
-
-
 class ThreadWithReturnValue(threading.Thread):
     def run(self):
         if self._target is not None:
@@ -233,8 +230,8 @@ def get_search_results(prompt: str, keywords):
 
 if __name__ == "__main__":
     os.system("clear")
-    from ModelMerge.models import chatgpt
-    print(get_search_results("今天的微博热搜有哪些？", chatgpt.chatgpt_api_url.v1_url))
+    # from ModelMerge.models import chatgpt
+    # print(get_search_results("今天的微博热搜有哪些？", chatgpt.chatgpt_api_url.v1_url))
 
     # # 搜索
 

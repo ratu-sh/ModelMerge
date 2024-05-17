@@ -3,7 +3,6 @@ from datetime import datetime
 
 from ModelMerge.utils import prompt
 from ModelMerge.models import chatgpt, claude3, gemini, groq
-
 LANGUAGE = os.environ.get('LANGUAGE', 'Simplified Chinese')
 GPT_ENGINE = os.environ.get('GPT_ENGINE', 'gpt-4-turbo-2024-04-09')
 
@@ -27,7 +26,7 @@ bot = chatgpt(api_key=API, api_url=API_URL , engine=GPT_ENGINE, system_prompt=sy
 # for text in bot.ask_stream("250m usd = cny"):
 # for text in bot.ask_stream("我在广州市，想周一去香港，周四早上回来，是去游玩，请你帮我规划整个行程。包括细节，如交通，住宿，餐饮，价格，等等，最好细节到每天各个部分的时间，花费，等等，尽量具体，用户一看就能直接执行的那种"):
 # for text in bot.ask_stream("英伟达最早支持杜比视界的显卡是哪一代"):
-for text in bot.ask_stream("今天是几月几日"):
+for text in bot.ask_stream("生成一只猫猫图"):
 # for text in bot.ask_stream("上海有哪些好玩的地方？"):
 # for text in bot.ask_stream("just say test"):
     print(text, end="")
