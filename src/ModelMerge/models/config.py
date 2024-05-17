@@ -20,9 +20,11 @@ LANGUAGE = os.environ.get('LANGUAGE', 'Simplified Chinese')
 class BaseAPI:
     def __init__(
         self,
-        api_url: str = (os.environ.get("API_URL") or "https://api.openai.com/v1/chat/completions"),
+        api_url: str = (os.environ.get("API_URL", None) or "https://api.openai.com/v1/chat/completions"),
     ):
         from urllib.parse import urlparse, urlunparse
+        if api_url is None:
+            raise Exception("API_URL is not set")
         self.source_api_url: str = api_url
         parsed_url = urlparse(self.source_api_url)
         if parsed_url.path != '/':
