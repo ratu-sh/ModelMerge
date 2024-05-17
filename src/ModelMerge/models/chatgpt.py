@@ -14,8 +14,7 @@ import tiktoken
 from ..utils.scripts import check_json, cut_message
 from ..utils.prompt import search_key_word_prompt
 from ..tools.function_call import function_call_list
-from ..plugins.websearch import Web_crawler, get_search_results
-from ..plugins.tarvel import get_city_tarvel_info
+from ..plugins import *
 
 def get_filtered_keys_from_object(obj: object, *keys: str) -> Set[str]:
     """
