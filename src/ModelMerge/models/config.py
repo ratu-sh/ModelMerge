@@ -9,7 +9,7 @@ from ..utils import prompt
 PLUGINS = {
     "SEARCH": (os.environ.get('SEARCH', "True") == "False") == False,
     "URL": True,
-    "IMAGE": (os.environ.get('IMAGE', "True") == "False") == False,
+    "IMAGE": (os.environ.get('IMAGE', "False") == "False") == False,
     "DATE": False,
     "VERSION": False,
     "TARVEL": (os.environ.get('TARVEL', "False") == "False") == False,
