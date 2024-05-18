@@ -285,6 +285,8 @@ class chatgpt(BaseLLM):
             "user": role,
         }
         json_post_body.update(copy.deepcopy(body))
+        if all(value == False for value in PLUGINS.values()):
+            return json_post_body
         json_post_body.update(copy.deepcopy(function_call_list["base"]))
         for item in PLUGINS.keys():
             try:
@@ -366,7 +368,7 @@ class chatgpt(BaseLLM):
             if line.decode("utf-8").startswith('data:'):
                 line = line.decode("utf-8")[6:]
             else:
-                print("line", line.decode("utf-8"))
+                # print("line", line.decode("utf-8"))
                 full_response = json.loads(line.decode("utf-8"))["choices"][0]["message"]["content"]
                 yield full_response
                 break
@@ -448,6 +450,10 @@ class chatgpt(BaseLLM):
                     ).format(function_response)
                 if function_call_name == "generate_image":
                     prompt = json.loads(function_full_response)["prompt"]
+                    function_response = eval(function_call_name)(prompt)
+                    function_response, text_len = cut_message(function_response, function_call_max_tokens, self.engine)
+                if function_call_name == "run_python_script":
+                    prompt = json.loads(function_full_response)["code"]
                     function_response = eval(function_call_name)(prompt)
                     function_response, text_len = cut_message(function_response, function_call_max_tokens, self.engine)
                 if function_call_name == "get_date_time_weekday":

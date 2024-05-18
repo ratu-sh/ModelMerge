@@ -107,6 +107,22 @@ function_call_list = \
             ]
         }
     },
+    "CODE": {
+        "name": "run_python_script",
+        "description": "Convert the string to a Python script and return the Python execution result.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "description": "the code to run"
+                }
+            },
+            "required": [
+                "code"
+            ]
+        }
+    },
 }
 def gpt2claude_tools_json(json_dict):
     import copy
