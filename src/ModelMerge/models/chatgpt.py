@@ -390,6 +390,7 @@ class chatgpt(BaseLLM):
                 full_response += content
                 yield content
             if "function_call" in delta:
+                # print(delta["function_call"]["arguments"], end="")
                 need_function_call = True
                 function_call_content = delta["function_call"]["arguments"]
                 if "name" in delta["function_call"]:
@@ -453,7 +454,7 @@ class chatgpt(BaseLLM):
                     function_response = eval(function_call_name)(prompt)
                     function_response, text_len = cut_message(function_response, function_call_max_tokens, self.engine)
                 if function_call_name == "run_python_script":
-                    prompt = json.loads(function_full_response)["code"]
+                    prompt = json.loads(function_full_response)["prompt"]
                     function_response = eval(function_call_name)(prompt)
                     function_response, text_len = cut_message(function_response, function_call_max_tokens, self.engine)
                 if function_call_name == "get_date_time_weekday":

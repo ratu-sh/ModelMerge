@@ -5,17 +5,17 @@ def run_python_script(script):
     try:
         # 执行脚本字符串
         exec(script, {}, local_vars)
-        return local_vars
+        return local_vars['result']
     except Exception as e:
         return str(e)
 
 if __name__ == '__main__':
     # 示例用法
     script = """
-    def add(a, b):
-        return a + b
+def add(a, b):
+    return a + b
 
-    result = add(5, 3)
+result = add(5, 3)
     """
 
     output = run_python_script(script)

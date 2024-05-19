@@ -17,6 +17,8 @@ def get_text_token_len(text, model_name):
     return len(encode_text)
 
 def cut_message(message: str, max_tokens: int, model_name: str):
+    if type(message) != str:
+        message = str(message)
     encoding, encode_text = get_encode_text(message, model_name)
     if len(encode_text) > max_tokens:
         encode_text = encode_text[:max_tokens]
