@@ -30,3 +30,5 @@ for text in bot.ask_stream("100个斐波纳切数列的和是多少"):
 # for text in bot.ask_stream("上海有哪些好玩的地方？"):
 # for text in bot.ask_stream("just say test"):
     print(text, end="")
+
+print(bot.tokens_usage)

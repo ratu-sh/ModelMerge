@@ -79,6 +79,8 @@ def check_json(json_data):
             if "Expecting ',' delimiter" in str(e):
                 json_data += '}'
             if "Expecting value: line 1 column 1" in str(e):
+                if json_data.startswith("prompt: "):
+                    json_data = json_data.replace("prompt: ", "")
                 json_data = '{"prompt": ' + json.dumps(json_data) + '}'
     return json_data
 

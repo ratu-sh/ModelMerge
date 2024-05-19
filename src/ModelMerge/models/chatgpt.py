@@ -96,6 +96,9 @@ class chatgpt(BaseLLM):
                 },
             ],
         }
+        self.tokens_usage = {
+            "default": 0,
+        }
         self.function_calls_counter = {}
         self.function_call_max_loop = 3
         # self.encode_web_text_list = []
@@ -109,6 +112,7 @@ class chatgpt(BaseLLM):
         role: str,
         convo_id: str = "default",
         function_name: str = "",
+        total_tokens: int = 0,
     ) -> None:
         """
         Add a message to the conversation
@@ -124,6 +128,8 @@ class chatgpt(BaseLLM):
             print("error: add_to_conversation message is None or empty")
             print("role", role, "function_name", function_name, "message", message)
             print('\033[0m')
+        if total_tokens:
+            self.tokens_usage[convo_id] += total_tokens
 
     def __truncate_conversation(self, convo_id: str = "default") -> None:
         """
@@ -313,6 +319,7 @@ class chatgpt(BaseLLM):
         model: str = None,
         pass_history: bool = True,
         function_name: str = "",
+        total_tokens: int = 0,
         **kwargs,
     ):
         """
@@ -321,7 +328,7 @@ class chatgpt(BaseLLM):
         # Make conversation if it doesn't exist
         if convo_id not in self.conversation or pass_history == False:
             self.reset(convo_id=convo_id, system_prompt=self.system_prompt)
-        self.add_to_conversation(prompt, role, convo_id=convo_id, function_name=function_name)
+        self.add_to_conversation(prompt, role, convo_id=convo_id, function_name=function_name, total_tokens=total_tokens)
         json_post, message_token = self.truncate_conversation(prompt, role, convo_id, model, pass_history, **kwargs)
         # print(self.conversation[convo_id])
         model_max_tokens = kwargs.get("max_tokens", self.max_tokens)
@@ -361,6 +368,7 @@ class chatgpt(BaseLLM):
         function_full_response: str = ""
         function_call_name: str = ""
         need_function_call: bool = False
+        total_tokens = 0
         for line in response.iter_lines():
             if not line or line.decode("utf-8").startswith(':'):
                 continue
@@ -376,6 +384,10 @@ class chatgpt(BaseLLM):
                 break
             resp: dict = json.loads(line)
             # print("resp", resp)
+            usage = resp.get("usage")
+            if usage:
+                total_tokens = usage.get("total_tokens") or 0
+                print("total_tokens", total_tokens)
             choices = resp.get("choices")
             if not choices:
                 continue
@@ -470,11 +482,11 @@ class chatgpt(BaseLLM):
             if self.conversation[convo_id][-1]["role"] == "function" and self.conversation[convo_id][-1]["name"] == "get_search_results":
                 mess = self.conversation[convo_id].pop(-1)
                 # print("Truncate message:", mess)
-            yield from self.ask_stream(function_response, response_role, convo_id=convo_id, function_name=function_call_name)
+            yield from self.ask_stream(function_response, response_role, convo_id=convo_id, function_name=function_call_name, total_tokens=total_tokens)
         else:
             if self.conversation[convo_id][-1]["role"] == "function" and self.conversation[convo_id][-1]["name"] == "get_search_results":
                 mess = self.conversation[convo_id].pop(-1)
-            self.add_to_conversation(full_response, response_role, convo_id=convo_id)
+            self.add_to_conversation(full_response, response_role, convo_id=convo_id, total_tokens=total_tokens)
             self.function_calls_counter = {}
             # self.clear_function_call(convo_id=convo_id)
             # self.encode_web_text_list = []
