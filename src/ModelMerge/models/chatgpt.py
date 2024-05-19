@@ -13,7 +13,7 @@ import tiktoken
 # import config
 from ..utils.scripts import check_json, cut_message
 from ..utils.prompt import search_key_word_prompt
-from ..tools.function_call import function_call_list
+from ..tools.chatgpt import function_call_list
 from ..plugins import *
 
 def get_filtered_keys_from_object(obj: object, *keys: str) -> Set[str]:
@@ -384,7 +384,7 @@ class chatgpt(BaseLLM):
             usage = resp.get("usage")
             if usage:
                 total_tokens = usage.get("total_tokens") or 0
-                print("total_tokens", total_tokens)
+                print("\n\rtotal_tokens", total_tokens)
             choices = resp.get("choices")
             if not choices:
                 continue
