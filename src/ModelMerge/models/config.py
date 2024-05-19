@@ -3,6 +3,8 @@ import json
 import httpx
 import requests
 from pathlib import Path
+from collections import defaultdict
+
 
 from ..utils import prompt
 
@@ -98,9 +100,7 @@ class BaseLLM:
                 },
             ],
         }
-        self.tokens_usage = {
-            "default": 0,
-        }
+        self.tokens_usage = defaultdict(int)
         self.function_calls_counter = {}
         self.function_call_max_loop = 10
 
@@ -147,7 +147,6 @@ class BaseLLM:
 
     def get_message_token(self, url, json_post):
         pass
-
 
     def get_post_body(
         self,
