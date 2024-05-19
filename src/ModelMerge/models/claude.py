@@ -32,6 +32,7 @@ class claude(BaseLLM):
         role: str,
         convo_id: str = "default",
         pass_history: bool = True,
+        total_tokens: int = 0,
     ) -> None:
         """
         Add a message to the conversation
@@ -40,6 +41,8 @@ class claude(BaseLLM):
         if convo_id not in self.conversation or pass_history == False:
             self.reset(convo_id=convo_id)
         self.conversation[convo_id].append({"role": role, "content": message})
+        if total_tokens:
+            self.tokens_usage[convo_id] += total_tokens
 
     def reset(self, convo_id: str = "default", system_prompt: str = None) -> None:
         """

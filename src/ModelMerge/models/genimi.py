@@ -28,6 +28,7 @@ class gemini(BaseLLM):
         role: str,
         convo_id: str = "default",
         pass_history: bool = True,
+        total_tokens: int = 0,
     ) -> None:
         """
         Add a message to the conversation
@@ -37,6 +38,8 @@ class gemini(BaseLLM):
             self.reset(convo_id=convo_id)
         # print("message", message)
         self.conversation[convo_id].append({"role": role, "parts": [{"text": message}]})
+        if total_tokens:
+            self.tokens_usage[convo_id] += total_tokens
 
     def reset(self, convo_id: str = "default", system_prompt: str = None) -> None:
         """

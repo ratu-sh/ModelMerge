@@ -96,9 +96,6 @@ class chatgpt(BaseLLM):
                 },
             ],
         }
-        self.tokens_usage = {
-            "default": 0,
-        }
         self.function_calls_counter = {}
         self.function_call_max_loop = 3
         # self.encode_web_text_list = []

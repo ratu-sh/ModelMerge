@@ -98,6 +98,9 @@ class BaseLLM:
                 },
             ],
         }
+        self.tokens_usage = {
+            "default": 0,
+        }
         self.function_calls_counter = {}
         self.function_call_max_loop = 10
 
