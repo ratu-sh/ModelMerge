@@ -354,6 +354,13 @@ class chatgpt(BaseLLM):
             # print("response.text", response.text)
             if response.status_code == 400:
                 print("response.text", response.text)
+                if "invalid_request_error" in response.text:
+                    for index, mess in enumerate(json_post["messages"]):
+                        if type(mess["content"]) == list:
+                            json_post["messages"][index] = {
+                                "role": mess["role"],
+                                "content": mess["content"][0]["text"]
+                            }
                 if "function_call" in json_post:
                     del json_post["function_call"]
                 if "functions" in json_post:
