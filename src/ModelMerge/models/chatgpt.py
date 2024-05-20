@@ -361,10 +361,11 @@ class chatgpt(BaseLLM):
                                 "role": mess["role"],
                                 "content": mess["content"][0]["text"]
                             }
-                if "function_call" in json_post:
-                    del json_post["function_call"]
-                if "functions" in json_post:
-                    del json_post["functions"]
+                else:
+                    if "function_call" in json_post:
+                        del json_post["function_call"]
+                    if "functions" in json_post:
+                        del json_post["functions"]
                 continue
             if response.status_code == 200:
                 break
