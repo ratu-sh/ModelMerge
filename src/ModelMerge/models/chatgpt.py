@@ -353,8 +353,11 @@ class chatgpt(BaseLLM):
                 return
             # print("response.text", response.text)
             if response.status_code == 400:
-                del json_post["function_call"]
-                del json_post["functions"]
+                print("response.text", response.text)
+                if "function_call" in json_post:
+                    del json_post["function_call"]
+                if "functions" in json_post:
+                    del json_post["functions"]
                 continue
             if response.status_code == 200:
                 break
