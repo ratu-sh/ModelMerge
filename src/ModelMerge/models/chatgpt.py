@@ -4,17 +4,14 @@ import json
 import copy
 from pathlib import Path
 from typing import AsyncGenerator, Set
-from .config import BaseLLM, PLUGINS, LANGUAGE
 
 import httpx
 import requests
 import tiktoken
 
-# import config
-from ..utils.scripts import check_json, cut_message
-from ..utils.prompt import search_key_word_prompt
-from ..tools.chatgpt import function_call_list
-from ..plugins import *
+from .config import BaseLLM, PLUGINS
+from ..utils.scripts import check_json
+from ..tools import get_tools_result, function_call_list
 
 def get_filtered_keys_from_object(obj: object, *keys: str) -> Set[str]:
     """
@@ -57,11 +54,12 @@ class chatgpt(BaseLLM):
         frequency_penalty: float = 0.0,
         reply_count: int = 1,
         truncate_limit: int = None,
+        use_plugins: bool = True,
     ) -> None:
         """
         Initialize Chatbot with API key (from https://platform.openai.com/account/api-keys)
         """
-        super().__init__(api_key, engine, api_url, system_prompt, proxy, timeout, max_tokens, temperature, top_p, presence_penalty, frequency_penalty, reply_count, truncate_limit)
+        super().__init__(api_key, engine, api_url, system_prompt, proxy, timeout, max_tokens, temperature, top_p, presence_penalty, frequency_penalty, reply_count, truncate_limit, use_plugins=use_plugins)
         self.max_tokens: int = max_tokens or (
             4096
             if "gpt-4-1106-preview" in engine or "gpt-4-0125-preview" in engine or "gpt-4-turbo" in engine or "gpt-3.5-turbo-1106" in engine or "claude" in engine or "gpt-4o" in engine
@@ -210,6 +208,7 @@ class chatgpt(BaseLLM):
                     continue
                 if values:
                     for value in values:
+                        # print("value", value)
                         num_tokens += len(encoding.encode(value))
                 if key == "name":  # if there's a name, the role is omitted
                     num_tokens += 5  # role is always required and always 1 token
@@ -288,7 +287,7 @@ class chatgpt(BaseLLM):
             "user": role,
         }
         json_post_body.update(copy.deepcopy(body))
-        if all(value == False for value in PLUGINS.values()):
+        if all(value == False for value in PLUGINS.values()) or self.use_plugins == False:
             return json_post_body
         json_post_body.update(copy.deepcopy(function_call_list["base"]))
         for item in PLUGINS.keys():
@@ -432,57 +431,7 @@ class chatgpt(BaseLLM):
                 if function_call_max_tokens <= 0:
                     function_call_max_tokens = int(self.truncate_limit / 2)
                 print("\033[32m function_call", function_call_name, "max token:", function_call_max_tokens, "\033[0m")
-                if function_call_name == "get_search_results":
-                    prompt = json.loads(function_full_response)["prompt"]
-                    yield "🌐 正在搜索您的问题，提取关键词..."
-                    llm = BaseLLM(api_key=self.api_key, api_url=self.api_url.source_api_url , engine=self.engine, system_prompt=self.system_prompt)
-                    keywords = llm.ask(search_key_word_prompt.format(source=prompt)).split("\n")
-                    function_response = yield from eval(function_call_name)(prompt, keywords)
-                    function_call_max_tokens = 32000
-                    function_response, text_len = cut_message(function_response, function_call_max_tokens, self.engine)
-                    if function_response:
-                        function_response = (
-                            f"You need to response the following question: {prompt}. Search results is provided inside <Search_results></Search_results> XML tags. Your task is to think about the question step by step and then answer the above question in {LANGUAGE} based on the Search results provided. Please response in {LANGUAGE} and adopt a style that is logical, in-depth, and detailed. Note: In order to make the answer appear highly professional, you should be an expert in textual analysis, aiming to make the answer precise and comprehensive. Directly response markdown format, without using markdown code blocks"
-                            "Here is the Search results, inside <Search_results></Search_results> XML tags:"
-                            "<Search_results>"
-                            "{}"
-                            "</Search_results>"
-                        ).format(function_response)
-                    else:
-                        function_response = "无法找到相关信息，停止使用 tools"
-                    # user_prompt = f"You need to response the following question: {prompt}. Search results is provided inside <Search_results></Search_results> XML tags. Your task is to think about the question step by step and then answer the above question in {config.LANGUAGE} based on the Search results provided. Please response in {config.LANGUAGE} and adopt a style that is logical, in-depth, and detailed. Note: In order to make the answer appear highly professional, you should be an expert in textual analysis, aiming to make the answer precise and comprehensive. Directly response markdown format, without using markdown code blocks"
-                    # self.add_to_conversation(user_prompt, "user", convo_id=convo_id)
-                if function_call_name == "get_url_content":
-                    url = json.loads(function_full_response)["url"]
-                    print("\n\nurl", url)
-                    # function_response = jina_ai_Web_crawler(url)
-                    function_response = Web_crawler(url)
-                    function_response, text_len = cut_message(function_response, function_call_max_tokens, self.engine)
-                if function_call_name == "get_city_tarvel_info":
-                    city = json.loads(function_full_response)["city"]
-                    function_response = eval(function_call_name)(city)
-                    function_response, text_len = cut_message(function_response, function_call_max_tokens, self.engine)
-                    function_response = (
-                        f"You need to response the following question: {city}. Tarvel infomation is provided inside <infomation></infomation> XML tags. Your task is to think about the question step by step and then answer the above question in {LANGUAGE} based on the tarvel infomation provided. Please response in {LANGUAGE} and adopt a style that is logical, in-depth, and detailed. Note: In order to make the answer appear highly professional, you should be an expert in textual analysis, aiming to make the answer precise and comprehensive."
-                        "Here is the tarvel infomation, inside <infomation></infomation> XML tags:"
-                        "<infomation>"
-                        "{}"
-                        "</infomation>"
-                    ).format(function_response)
-                if function_call_name == "generate_image":
-                    prompt = json.loads(function_full_response)["prompt"]
-                    function_response = eval(function_call_name)(prompt)
-                    function_response, text_len = cut_message(function_response, function_call_max_tokens, self.engine)
-                if function_call_name == "run_python_script":
-                    prompt = json.loads(function_full_response)["prompt"]
-                    function_response = eval(function_call_name)(prompt)
-                    function_response, text_len = cut_message(function_response, function_call_max_tokens, self.engine)
-                if function_call_name == "get_date_time_weekday":
-                    function_response = eval(function_call_name)()
-                    function_response, text_len = cut_message(function_response, function_call_max_tokens, self.engine)
-                if function_call_name == "get_version_info":
-                    function_response = eval(function_call_name)()
-                    function_response, text_len = cut_message(function_response, function_call_max_tokens, self.engine)
+                function_response = yield from get_tools_result(function_call_name, function_full_response, function_call_max_tokens, self.engine, chatgpt, self.api_key, self.api_url, use_plugins=False)
             else:
                 function_response = "无法找到相关信息，停止使用 tools"
             response_role = "function"

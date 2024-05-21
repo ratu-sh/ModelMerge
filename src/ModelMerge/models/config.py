@@ -5,17 +5,16 @@ import requests
 from pathlib import Path
 from collections import defaultdict
 
-
 from ..utils import prompt
 
 PLUGINS = {
-    "SEARCH": (os.environ.get('SEARCH', "True") == "False") == False,
-    "URL": True,
-    "CODE": True,
-    "IMAGE": (os.environ.get('IMAGE', "False") == "False") == False,
-    "DATE": False,
-    "VERSION": False,
-    "TARVEL": (os.environ.get('TARVEL', "False") == "False") == False,
+    "SEARCH" : (os.environ.get('SEARCH', "True") == "False") == False,
+    "URL"    : (os.environ.get('URL', "True") == "False") == False,
+    "CODE"   : (os.environ.get('CODE', "True") == "False") == False,
+    "IMAGE"  : (os.environ.get('IMAGE', "False") == "False") == False,
+    "DATE"   : (os.environ.get('DATE', "False") == "False") == False,
+    "VERSION": (os.environ.get('VERSION', "False") == "False") == False,
+    "TARVEL" : (os.environ.get('TARVEL', "False") == "False") == False,
 }
 
 LANGUAGE = os.environ.get('LANGUAGE', 'Simplified Chinese')
@@ -55,6 +54,7 @@ class BaseLLM:
         frequency_penalty: float = 0.0,
         reply_count: int = 1,
         truncate_limit: int = None,
+        use_plugins: bool = True,
     ) -> None:
         self.api_key: str = api_key
         self.engine: str = engine
@@ -100,9 +100,11 @@ class BaseLLM:
                 },
             ],
         }
+        self.truncate_limit: int = 100000
         self.tokens_usage = defaultdict(int)
         self.function_calls_counter = {}
         self.function_call_max_loop = 10
+        self.use_plugins = use_plugins
 
     def add_to_conversation(
         self,

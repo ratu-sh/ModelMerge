@@ -4,13 +4,9 @@ import copy
 import tiktoken
 import requests
 
-from .config import BaseLLM, PLUGINS, LANGUAGE
-from ..tools.claude import claude_tools_list
-from ..utils.scripts import check_json, cut_message
-from ..utils.prompt import search_key_word_prompt
-from ..plugins import *
-
-
+from .config import BaseLLM, PLUGINS
+from ..utils.scripts import check_json
+from ..tools import get_tools_result, claude_tools_list
 
 class claudeConversation(dict):
     def Conversation(self, index):
@@ -27,8 +23,9 @@ class claude(BaseLLM):
         temperature: float = 0.5,
         top_p: float = 0.7,
         timeout: float = 20,
+        use_plugins: bool = True,
     ):
-        super().__init__(api_key, engine, api_url, system_prompt, timeout=timeout, temperature=temperature, top_p=top_p)
+        super().__init__(api_key, engine, api_url, system_prompt, timeout=timeout, temperature=temperature, top_p=top_p, use_plugins=use_plugins)
         # self.api_url = api_url
         self.conversation = claudeConversation()
 
@@ -168,9 +165,9 @@ class claude3(BaseLLM):
         temperature: float = 0.5,
         timeout: float = 20,
         top_p: float = 0.7,
+        use_plugins: bool = True,
     ):
-        super().__init__(api_key, engine, api_url, system_prompt, timeout=timeout, temperature=temperature, top_p=top_p)
-        self.api_url = api_url
+        super().__init__(api_key, engine, api_url, system_prompt, timeout=timeout, temperature=temperature, top_p=top_p, use_plugins=use_plugins)
         self.conversation: dict[str, list[dict]] = {
             "default": [],
         }
@@ -279,7 +276,7 @@ class claude3(BaseLLM):
         # self.__truncate_conversation(convo_id=convo_id)
         # print(self.conversation[convo_id])
 
-        url = self.api_url
+        url = self.api_url.source_api_url
         headers = {
             "content-type": "application/json",
             "x-api-key": f"{kwargs.get('api_key', self.api_key)}",
@@ -300,7 +297,7 @@ class claude3(BaseLLM):
         }
         if self.system_prompt:
             json_post["system"] = self.system_prompt
-        if all(value == False for value in PLUGINS.values()) == False:
+        if all(value == False for value in PLUGINS.values()) == False and self.use_plugins:
             json_post.update(copy.deepcopy(claude_tools_list["base"]))
             for item in PLUGINS.keys():
                 try:
@@ -381,57 +378,8 @@ class claude3(BaseLLM):
             function_full_response = check_json(function_full_response)
             print("function_full_response", function_full_response)
             function_response = ""
-            if function_call_name == "get_search_results":
-                prompt = json.loads(function_full_response)["prompt"]
-                yield "🌐 正在搜索您的问题，提取关键词..."
-                llm = claude3(api_key=self.api_key, api_url=self.api_url, engine=self.engine, system_prompt=self.system_prompt)
-                keywords = llm.ask(search_key_word_prompt.format(source=prompt)).split("\n")
-                function_response = yield from eval(function_call_name)(prompt, keywords)
-                function_call_max_tokens = 32000
-                function_response, text_len = cut_message(function_response, function_call_max_tokens, self.engine)
-                if function_response:
-                    function_response = (
-                        f"You need to response the following question: {prompt}. Search results is provided inside <Search_results></Search_results> XML tags. Your task is to think about the question step by step and then answer the above question in {LANGUAGE} based on the Search results provided. Please response in {LANGUAGE} and adopt a style that is logical, in-depth, and detailed. Note: In order to make the answer appear highly professional, you should be an expert in textual analysis, aiming to make the answer precise and comprehensive. Directly response markdown format, without using markdown code blocks"
-                        "Here is the Search results, inside <Search_results></Search_results> XML tags:"
-                        "<Search_results>"
-                        "{}"
-                        "</Search_results>"
-                    ).format(function_response)
-                else:
-                    function_response = "无法找到相关信息，停止使用 tools"
-                # user_prompt = f"You need to response the following question: {prompt}. Search results is provided inside <Search_results></Search_results> XML tags. Your task is to think about the question step by step and then answer the above question in {config.LANGUAGE} based on the Search results provided. Please response in {config.LANGUAGE} and adopt a style that is logical, in-depth, and detailed. Note: In order to make the answer appear highly professional, you should be an expert in textual analysis, aiming to make the answer precise and comprehensive. Directly response markdown format, without using markdown code blocks"
-                # self.add_to_conversation(user_prompt, "user", convo_id=convo_id)
-            if function_call_name == "get_url_content":
-                url = json.loads(function_full_response)["url"]
-                print("\n\nurl", url)
-                # function_response = jina_ai_Web_crawler(url)
-                function_response = Web_crawler(url)
-                function_response, text_len = cut_message(function_response, function_call_max_tokens, self.engine)
-            if function_call_name == "get_city_tarvel_info":
-                city = json.loads(function_full_response)["city"]
-                function_response = eval(function_call_name)(city)
-                function_response, text_len = cut_message(function_response, function_call_max_tokens, self.engine)
-                function_response = (
-                    f"You need to response the following question: {city}. Tarvel infomation is provided inside <infomation></infomation> XML tags. Your task is to think about the question step by step and then answer the above question in {LANGUAGE} based on the tarvel infomation provided. Please response in {LANGUAGE} and adopt a style that is logical, in-depth, and detailed. Note: In order to make the answer appear highly professional, you should be an expert in textual analysis, aiming to make the answer precise and comprehensive."
-                    "Here is the tarvel infomation, inside <infomation></infomation> XML tags:"
-                    "<infomation>"
-                    "{}"
-                    "</infomation>"
-                ).format(function_response)
-            if function_call_name == "generate_image":
-                prompt = json.loads(function_full_response)["prompt"]
-                function_response = eval(function_call_name)(prompt)
-                function_response, text_len = cut_message(function_response, function_call_max_tokens, self.engine)
-            if function_call_name == "run_python_script":
-                prompt = json.loads(function_full_response)["prompt"]
-                function_response = eval(function_call_name)(prompt)
-                function_response, text_len = cut_message(function_response, function_call_max_tokens, self.engine)
-            if function_call_name == "get_date_time_weekday":
-                function_response = eval(function_call_name)()
-                function_response, text_len = cut_message(function_response, function_call_max_tokens, self.engine)
-            if function_call_name == "get_version_info":
-                function_response = eval(function_call_name)()
-                function_response, text_len = cut_message(function_response, function_call_max_tokens, self.engine)
+            function_call_max_tokens = int(self.truncate_limit / 2)
+            function_response = yield from get_tools_result(function_call_name, function_full_response, function_call_max_tokens, self.engine, claude3, self.api_key, self.api_url, use_plugins=False)
             response_role = "assistant"
             if self.conversation[convo_id][-1]["role"] == "function" and self.conversation[convo_id][-1]["name"] == "get_search_results":
                 mess = self.conversation[convo_id].pop(-1)
@@ -441,9 +389,3 @@ class claude3(BaseLLM):
                 mess = self.conversation[convo_id].pop(-1)
             self.add_to_conversation(full_response, response_role, convo_id=convo_id, total_tokens=total_tokens)
             self.function_calls_counter = {}
-
-
-
-
-
-        # self.add_to_conversation(full_response, response_role, convo_id=convo_id)
