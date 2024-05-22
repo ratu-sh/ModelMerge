@@ -1,23 +1,10 @@
 import os
-import json
 import httpx
 import requests
 from pathlib import Path
 from collections import defaultdict
 
 from ..utils import prompt
-
-PLUGINS = {
-    "SEARCH" : (os.environ.get('SEARCH', "True") == "False") == False,
-    "URL"    : (os.environ.get('URL', "True") == "False") == False,
-    "CODE"   : (os.environ.get('CODE', "True") == "False") == False,
-    "IMAGE"  : (os.environ.get('IMAGE', "False") == "False") == False,
-    "DATE"   : (os.environ.get('DATE', "False") == "False") == False,
-    "VERSION": (os.environ.get('VERSION', "False") == "False") == False,
-    "TARVEL" : (os.environ.get('TARVEL', "False") == "False") == False,
-}
-
-LANGUAGE = os.environ.get('LANGUAGE', 'Simplified Chinese')
 
 class BaseAPI:
     def __init__(
@@ -180,54 +167,7 @@ class BaseLLM:
         """
         Ask a question
         """
-        response = self.session.post(
-            self.api_url.chat_url,
-            headers={"Authorization": f"Bearer {kwargs.get('api_key', self.api_key)}"},
-            json={
-                "model": model or self.engine,
-                "messages": [{"role": "system","content": self.system_prompt},{"role": role, "content": prompt}],
-                "stream": True,
-                "temperature": kwargs.get("temperature", self.temperature),
-                "top_p": kwargs.get("top_p", self.top_p),
-                "presence_penalty": kwargs.get(
-                    "presence_penalty",
-                    self.presence_penalty,
-                ),
-                "frequency_penalty": kwargs.get(
-                    "frequency_penalty",
-                    self.frequency_penalty,
-                ),
-                "n": kwargs.get("n", self.reply_count),
-                "user": role,
-                "max_tokens": kwargs.get("max_tokens", self.max_tokens),
-            },
-            timeout=kwargs.get("timeout", self.timeout),
-            stream=True,
-        )
-        if response.status_code != 200:
-            raise Exception(f"{response.status_code} {response.reason} {response.text}")
-        full_response: str = ""
-        for line in response.iter_lines():
-            line = line.strip()
-            if not line:
-                continue
-            line = line.decode("utf-8")[6:]
-            # print("line", line)
-            if line == "[DONE]":
-                break
-            resp: dict = json.loads(line)
-            if "error" in resp:
-                raise Exception(f"{resp['error']}")
-            choices = resp.get("choices")
-            if not choices:
-                continue
-            delta: dict[str, str] = choices[0].get("delta")
-            if not delta:
-                continue
-            if "content" in delta:
-                content: str = delta["content"]
-                full_response += content
-                yield content
+        pass
 
     async def ask_async(
         self,

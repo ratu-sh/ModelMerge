@@ -1,10 +1,12 @@
+import os
 import json
 
 from ..utils.scripts import cut_message
 from ..utils.prompt import search_key_word_prompt
 
 from ..plugins import *
-from ..models.config import LANGUAGE
+
+LANGUAGE = os.environ.get('LANGUAGE', 'Simplified Chinese')
 
 
 def get_tools_result(function_call_name, function_full_response, function_call_max_tokens, engine, robot, api_key, api_url, use_plugins):

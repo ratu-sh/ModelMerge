@@ -4,7 +4,8 @@ import copy
 import tiktoken
 import requests
 
-from .config import BaseLLM, PLUGINS
+from .base import BaseLLM
+from ..plugins import PLUGINS
 from ..utils.scripts import check_json
 from ..tools import get_tools_result, claude_tools_list
 

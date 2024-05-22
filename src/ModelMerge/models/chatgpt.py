@@ -9,7 +9,8 @@ import httpx
 import requests
 import tiktoken
 
-from .config import BaseLLM, PLUGINS
+from .base import BaseLLM
+from ..plugins import PLUGINS
 from ..utils.scripts import check_json
 from ..tools import get_tools_result, function_call_list
 
@@ -292,7 +293,6 @@ class chatgpt(BaseLLM):
         json_post_body.update(copy.deepcopy(function_call_list["base"]))
         for item in PLUGINS.keys():
             try:
-                # print(item, PLUGINS[item])
                 if PLUGINS[item]:
                     json_post_body["functions"].append(function_call_list[item])
             except:
@@ -550,29 +550,6 @@ class chatgpt(BaseLLM):
             **kwargs,
         )
         full_response: str = "".join([r async for r in response])
-        return full_response
-
-    def ask(
-        self,
-        prompt: str,
-        role: str = "user",
-        convo_id: str = "default",
-        model: str = None,
-        pass_history: bool = True,
-        **kwargs,
-    ) -> str:
-        """
-        Non-streaming ask
-        """
-        response = self.ask_stream(
-            prompt=prompt,
-            role=role,
-            convo_id=convo_id,
-            model=model,
-            pass_history=pass_history,
-            **kwargs,
-        )
-        full_response: str = "".join(response)
         return full_response
 
     def rollback(self, n: int = 1, convo_id: str = "default") -> None:

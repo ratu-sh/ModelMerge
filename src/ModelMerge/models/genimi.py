@@ -3,7 +3,7 @@ import json
 import requests
 import tiktoken
 
-from .config import BaseLLM
+from .base import BaseLLM
 
 class gemini(BaseLLM):
     def __init__(

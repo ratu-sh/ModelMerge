@@ -1,7 +1,7 @@
 import os
 import requests
 import json
-from ..models.config import BaseLLM
+from ..models.base import BaseLLM
 
 API = os.environ.get('API', None)
 API_URL = os.environ.get('API_URL', None)
