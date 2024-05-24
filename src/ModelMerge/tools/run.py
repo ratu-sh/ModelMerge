@@ -9,12 +9,12 @@ from ..plugins import *
 LANGUAGE = os.environ.get('LANGUAGE', 'Simplified Chinese')
 
 
-def get_tools_result(function_call_name, function_full_response, function_call_max_tokens, engine, robot, api_key, api_url, use_plugins):
+def get_tools_result(function_call_name, function_full_response, function_call_max_tokens, engine, robot, api_key, api_url, use_plugins, model):
     if function_call_name == "get_search_results":
         prompt = json.loads(function_full_response)["prompt"]
         yield "🌐 正在搜索您的问题，提取关键词..."
         llm = robot(api_key=api_key, api_url=api_url.source_api_url, engine=engine, use_plugins=use_plugins)
-        keywords = llm.ask(search_key_word_prompt.format(source=prompt)).split("\n")
+        keywords = llm.ask(search_key_word_prompt.format(source=prompt), model=model).split("\n")
         function_response = yield from eval(function_call_name)(prompt, keywords)
         function_call_max_tokens = 32000
         function_response, text_len = cut_message(function_response, function_call_max_tokens, engine)
