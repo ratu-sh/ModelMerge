@@ -18,8 +18,8 @@ Current_Date = current_date.strftime("%Y-%m-%d")
 
 # systemprompt = os.environ.get('SYSTEMPROMPT', prompt.chatgpt_system_prompt)
 systemprompt = os.environ.get('SYSTEMPROMPT', prompt.system_prompt.format(LANGUAGE, Current_Date))
-# bot = chatgpt(api_key=API, api_url=API_URL , engine=GPT_ENGINE, system_prompt=systemprompt)
-bot = claude3(api_key=CLAUDE_API, engine=GPT_ENGINE, system_prompt=systemprompt)
+bot = chatgpt(api_key=API, api_url=API_URL , engine=GPT_ENGINE, system_prompt=systemprompt)
+# bot = claude3(api_key=CLAUDE_API, engine=GPT_ENGINE, system_prompt=systemprompt)
 # bot = gemini(api_key=GOOGLE_AI_API_KEY, engine=GPT_ENGINE, system_prompt=systemprompt)
 # bot = groq(api_key=GROQ_API_KEY, engine=GPT_ENGINE, system_prompt=systemprompt)
 # for text in bot.ask_stream("今天的微博热搜有哪些？"):
@@ -28,7 +28,8 @@ bot = claude3(api_key=CLAUDE_API, engine=GPT_ENGINE, system_prompt=systemprompt)
 # for text in bot.ask_stream("英伟达最早支持杜比视界的显卡是哪一代"):
 # for text in bot.ask_stream("100个斐波纳切数列的和是多少"):
 # for text in bot.ask_stream("上海有哪些好玩的地方？"):
-for text in bot.ask_stream("今天伊朗总统目前的情况怎么样？"):
+for text in bot.ask_stream("https://arxiv.org/abs/2404.02041 这篇论文讲了啥？"):
+# for text in bot.ask_stream("今天伊朗总统目前的情况怎么样？"):
 # for text in bot.ask_stream("just say test"):
 # for text in bot.ask_stream("hi"):
     print(text, end="")

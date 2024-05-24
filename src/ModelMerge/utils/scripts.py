@@ -46,9 +46,11 @@ def get_encode_image(image_url):
     os.remove(image_path)
     return prompt
 
-def Document_extract(docurl):
-    filename = get_doc_from_url(docurl)
-    docpath = os.getcwd() + "/" + filename
+def Document_extract(docurl, docpath=None):
+    filename = docpath
+    if "paper.pdf" != docpath:
+        filename = get_doc_from_url(docurl)
+        docpath = os.getcwd() + "/" + filename
     if filename[-3:] == "pdf":
         from pdfminer.high_level import extract_text
         text = extract_text(docpath)

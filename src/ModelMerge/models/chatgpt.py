@@ -10,9 +10,9 @@ import requests
 import tiktoken
 
 from .base import BaseLLM
-from ..plugins import PLUGINS
 from ..utils.scripts import check_json
-from ..tools import get_tools_result, function_call_list
+from ..tools import function_call_list
+from ..plugins import PLUGINS, get_tools_result
 
 def get_filtered_keys_from_object(obj: object, *keys: str) -> Set[str]:
     """

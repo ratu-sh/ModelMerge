@@ -5,9 +5,9 @@ import tiktoken
 import requests
 
 from .base import BaseLLM
-from ..plugins import PLUGINS
+from ..plugins import PLUGINS, get_tools_result
 from ..utils.scripts import check_json
-from ..tools import get_tools_result, claude_tools_list
+from ..tools import claude_tools_list
 
 class claudeConversation(dict):
     def Conversation(self, index):

@@ -123,4 +123,20 @@ function_call_list = \
             ]
         }
     },
+    "ARXIV": {
+        "name": "download_read_arxiv_pdf",
+        "description": "Get the content of the paper corresponding to the arXiv ID",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "prompt": {
+                    "type": "string",
+                    "description": "the arXiv ID of the paper"
+                }
+            },
+            "required": [
+                "prompt"
+            ]
+        }
+    },
 }
