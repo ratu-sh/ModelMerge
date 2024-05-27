@@ -28,10 +28,10 @@ bot = chatgpt(api_key=API, api_url=API_URL , engine=GPT_ENGINE, system_prompt=sy
 # for text in bot.ask_stream("英伟达最早支持杜比视界的显卡是哪一代"):
 # for text in bot.ask_stream("100个斐波纳切数列的和是多少"):
 # for text in bot.ask_stream("上海有哪些好玩的地方？"):
-for text in bot.ask_stream("https://arxiv.org/abs/2404.02041 这篇论文讲了啥？"):
+# for text in bot.ask_stream("https://arxiv.org/abs/2404.02041 这篇论文讲了啥？"):
 # for text in bot.ask_stream("今天伊朗总统目前的情况怎么样？"):
 # for text in bot.ask_stream("just say test"):
-# for text in bot.ask_stream("hi"):
+for text in bot.ask_stream("画一只猫猫"):
     print(text, end="")
 
 # print("\n bot tokens usage", bot.tokens_usage)

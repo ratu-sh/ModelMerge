@@ -360,6 +360,14 @@ class chatgpt(BaseLLM):
                                 "role": mess["role"],
                                 "content": mess["content"][0]["text"]
                             }
+                if "'function' is not an allowed role" in response.text:
+                    if json_post["messages"][-1]["role"] == "function":
+                        mess = json_post["messages"][-1]
+                        json_post["messages"][-1] = {
+                            "role": "assistant",
+                            "name": mess["name"],
+                            "content": mess["content"]
+                        }
                 else:
                     if "function_call" in json_post:
                         del json_post["function_call"]
