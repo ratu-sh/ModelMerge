@@ -78,7 +78,10 @@ def get_mafengwo_urls(soup):
     return urls
 
 def get_mafengwo_all_text(soup):
+    all_text = soup.get_text()
+    return all_text
     # print(soup)
+    # exit(0)
     all_text = "<travel_plan>\n\n"
     title = soup.find('h1').text.strip()
     all_text += "旅游方案：{title}\n\n".format(title=title)
@@ -92,6 +95,8 @@ def get_mafengwo_all_text(soup):
         # print(day_number)
         all_text += day_number.replace("D", "Day")  # 打印天数
         place = day.find('span', class_='place').text.strip()
+        # transport = day.find('span', class_='transport').text.strip()
+        # print(transport)
         all_text += f" {place}"  # 打印景点和停留时间
         all_text += "\n\n"  # 打印景点和停留时间
 
@@ -105,9 +110,10 @@ def get_mafengwo_all_text(soup):
         place_name = [item.text.strip() for item in day.find_all('a', class_='p-link')]
         stay_time = [item.text.strip() for item in day.find_all('span', class_='time')]
         place_info = [item.text.strip() for item in day.find_all('dd')]
+        transport_time = [item.text.strip().replace('&nbsp', 'None') for item in day.find_all('span', class_='transport')] + ["None"]
         place_list = []
-        for place, time, info in zip(place_name, stay_time, place_info):
-            place_list.append(f"地点: {place}\n停留时间: {time}\n介绍: {info}\n")
+        for place, time, info, transport in zip(place_name, stay_time, place_info, transport_time):
+            place_list.append(f"地点: {place}\n停留时间: {time}\n介绍: {info}\n去下一个地点的交通方式和时间：{transport}\n")
         text = "路线：\n\n" + "\n".join(place_list)
         all_text += text  # 打印景点和停留时间
 
@@ -122,8 +128,14 @@ def get_mafengwo_all_text(soup):
     return all_text
 
 def get_mafengwo_all_travel_plan(routes):
-    all_travel_plan = "每个旅游方案都被包裹在<travel_plan></travel_plan>标记里面，下面是所有旅游方案：\n\n"
+    all_travel_plan = (
+        # "每个旅游方案都被包裹在<travel_plan></travel_plan>标记里面。\n"
+        # "停留时间是该地点的推荐停留时间。\n"
+        # "交通方式和时间是从这一个地点到下个地点的交通方式和时间。None 表示暂时没提供具体交通信息。\n"
+        "下面是所有旅游方案：\n\n"
+    )
     for url in routes:
+        print("travel plan url:", url)
         soup, soup_lxml = get_mafengwo(url)
         text = get_mafengwo_all_text(soup_lxml)
         all_travel_plan += text
@@ -145,7 +157,7 @@ def get_city_tarvel_info(city):
 
 if __name__ == '__main__':
     # url = 'https://www.mafengwo.cn/mdd/route/10088.html'
-    all_travel_plan = get_city_tarvel_info("上海")
+    all_travel_plan = get_city_tarvel_info("重庆")
     print(all_travel_plan)
 
 

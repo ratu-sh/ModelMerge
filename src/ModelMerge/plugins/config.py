@@ -3,7 +3,7 @@ import json
 
 from . import *
 from ..utils.scripts import cut_message
-from ..utils.prompt import search_key_word_prompt
+from ..utils.prompt import search_key_word_prompt, arxiv_doc_assistant_prompt, arxiv_doc_user_prompt
 
 PLUGINS = {
     "SEARCH" : (os.environ.get('SEARCH', "True") == "False") == False,
@@ -18,7 +18,7 @@ PLUGINS = {
 
 LANGUAGE = os.environ.get('LANGUAGE', 'Simplified Chinese')
 
-def get_tools_result(function_call_name, function_full_response, function_call_max_tokens, engine, robot, api_key, api_url, use_plugins, model):
+def get_tools_result(function_call_name, function_full_response, function_call_max_tokens, engine, robot, api_key, api_url, use_plugins, model, add_message, convo_id):
     if function_call_name == "get_search_results":
         prompt = json.loads(function_full_response)["prompt"]
         yield "🌐 正在搜索您的问题，提取关键词..."
@@ -61,6 +61,8 @@ def get_tools_result(function_call_name, function_full_response, function_call_m
         function_response = eval(function_call_name)(prompt)
         function_response, text_len = cut_message(function_response, function_call_max_tokens, engine)
     if function_call_name == "download_read_arxiv_pdf":
+        add_message(arxiv_doc_user_prompt, "user", convo_id=convo_id)
+        add_message(arxiv_doc_assistant_prompt, "assistant", convo_id=convo_id)
         prompt = json.loads(function_full_response)["prompt"]
         function_response = eval(function_call_name)(prompt)
         function_response, text_len = cut_message(function_response, function_call_max_tokens, engine)

@@ -18,6 +18,14 @@ Current_Date = current_date.strftime("%Y-%m-%d")
 
 # systemprompt = os.environ.get('SYSTEMPROMPT', prompt.chatgpt_system_prompt)
 systemprompt = os.environ.get('SYSTEMPROMPT', prompt.system_prompt.format(LANGUAGE, Current_Date))
+# systemprompt = (
+#     "你是一位旅行专家。你可以规划旅行行程，在回答用户之前，必须先查找旅行攻略。"
+#     "查询攻略后，你需要分析用户个性化需求给出合理的行程安排。充分考虑用户的年龄，情侣，家庭，朋友，儿童，独自旅行等情况。"
+#     "你需要根据用户给出的地点和预算，给出真实准确的行程，包括游玩时长、景点之间的交通方式和移动距离，每天都要给出总的游玩时间。"
+#     "给用户介绍景点的时候，根据查到的景点介绍结合你自己的知识，景点介绍尽量丰富精彩，吸引用户眼球，不要直接复述查到的景点介绍。"
+#     "尽量排满用户的行程，不要有太多空闲时间。"
+#     "你还可以根据用户的需求，给出一些旅行建议。"
+# )
 bot = chatgpt(api_key=API, api_url=API_URL , engine=GPT_ENGINE, system_prompt=systemprompt)
 # bot = claude3(api_key=CLAUDE_API, engine=GPT_ENGINE, system_prompt=systemprompt)
 # bot = gemini(api_key=GOOGLE_AI_API_KEY, engine=GPT_ENGINE, system_prompt=systemprompt)
@@ -28,10 +36,11 @@ bot = chatgpt(api_key=API, api_url=API_URL , engine=GPT_ENGINE, system_prompt=sy
 # for text in bot.ask_stream("英伟达最早支持杜比视界的显卡是哪一代"):
 # for text in bot.ask_stream("100个斐波纳切数列的和是多少"):
 # for text in bot.ask_stream("上海有哪些好玩的地方？"):
-# for text in bot.ask_stream("https://arxiv.org/abs/2404.02041 这篇论文讲了啥？"):
+for text in bot.ask_stream("https://arxiv.org/abs/2404.02041 这篇论文讲了啥？"):
 # for text in bot.ask_stream("今天伊朗总统目前的情况怎么样？"):
 # for text in bot.ask_stream("just say test"):
-for text in bot.ask_stream("画一只猫猫"):
+# for text in bot.ask_stream("画一只猫猫"):
+# for text in bot.ask_stream("我想去重庆旅游，我有一天的时间。你能帮我规划一下吗？"):
     print(text, end="")
 
 # print("\n bot tokens usage", bot.tokens_usage)
