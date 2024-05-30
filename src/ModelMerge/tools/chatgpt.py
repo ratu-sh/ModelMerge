@@ -139,4 +139,25 @@ function_call_list = \
             ]
         }
     },
+    "FLIGHT": {
+        "name": "get_Round_trip_flight_price",
+        "description": "Get round-trip ticket prices between two cities for the next six months",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "departcity": {
+                    "type": "string",
+                    "description": "the chinese name of departure city"
+                },
+                "arrivalcity": {
+                    "type": "string",
+                    "description": "the chinese name of arrival city"
+                }
+            },
+            "required": [
+                "departcity",
+                "arrivalcity"
+            ]
+        }
+    },
 }

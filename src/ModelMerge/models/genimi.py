@@ -10,7 +10,7 @@ class gemini(BaseLLM):
         self,
         api_key: str,
         engine: str = os.environ.get("GPT_ENGINE") or "gemini-1.5-pro-latest",
-        api_url: str = "https://generativelanguage.googleapis.com/v1beta/models/{model}:{stream}?key={api_key}",
+        api_url: str = "https://generativelanguage.googleapis.com/v1/models/{model}:{stream}?key={api_key}",
         system_prompt: str = "You are ChatGPT, a large language model trained by OpenAI. Respond conversationally",
         temperature: float = 0.5,
         top_p: float = 0.7,

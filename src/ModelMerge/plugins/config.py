@@ -14,6 +14,7 @@ PLUGINS = {
     "DATE"   : (os.environ.get('DATE', "False") == "False") == False,
     "VERSION": (os.environ.get('VERSION', "False") == "False") == False,
     "TARVEL" : (os.environ.get('TARVEL', "False") == "False") == False,
+    "FLIGHT" : (os.environ.get('FLIGHT', "False") == "False") == False,
 }
 
 LANGUAGE = os.environ.get('LANGUAGE', 'Simplified Chinese')
@@ -50,8 +51,20 @@ def get_tools_result(function_call_name, function_full_response, function_call_m
         function_response = eval(function_call_name)(city)
         function_response, text_len = cut_message(function_response, function_call_max_tokens, engine)
         function_response = (
-            f"You need to response the following question: {city}. Tarvel infomation is provided inside <infomation></infomation> XML tags. Your task is to think about the question step by step and then answer the above question in {LANGUAGE} based on the tarvel infomation provided. Please response in {LANGUAGE} and adopt a style that is logical, in-depth, and detailed. Note: In order to make the answer appear highly professional, you should be an expert in textual analysis, aiming to make the answer precise and comprehensive."
+            f"Tarvel infomation is provided inside <infomation></infomation> XML tags. Your task is to think about the question step by step and then answer the above question in {LANGUAGE} based on the tarvel infomation provided. Please response in {LANGUAGE} and adopt a style that is logical, in-depth, and detailed. Note: In order to make the answer appear highly professional, you should be an expert in textual analysis, aiming to make the answer precise and comprehensive."
             "Here is the tarvel infomation, inside <infomation></infomation> XML tags:"
+            "<infomation>"
+            "{}"
+            "</infomation>"
+        ).format(function_response)
+    if function_call_name == "get_Round_trip_flight_price":
+        departcity = json.loads(function_full_response)["departcity"]
+        arrivalcity = json.loads(function_full_response)["arrivalcity"]
+        function_response = eval(function_call_name)(departcity, arrivalcity)
+        function_response, text_len = cut_message(function_response, function_call_max_tokens, engine)
+        function_response = (
+            # f"Tarvel infomation is provided inside <infomation></infomation> XML tags. Your task is to think about the question step by step and then answer the above question in {LANGUAGE} based on the tarvel infomation provided. Please response in {LANGUAGE} and adopt a style that is logical, in-depth, and detailed. Note: In order to make the answer appear highly professional, you should be an expert in textual analysis, aiming to make the answer precise and comprehensive."
+            "Here is the Round-trip flight price infomation, inside <infomation></infomation> XML tags:"
             "<infomation>"
             "{}"
             "</infomation>"
