@@ -78,8 +78,8 @@ def get_mafengwo_urls(soup):
     return urls
 
 def get_mafengwo_all_text(soup):
-    all_text = soup.get_text()
-    return all_text
+    # all_text = soup.get_text()
+    # return all_text
     # print(soup)
     # exit(0)
     all_text = "<travel_plan>\n\n"

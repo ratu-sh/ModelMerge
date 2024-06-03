@@ -147,11 +147,11 @@ function_call_list = \
             "properties": {
                 "departcity": {
                     "type": "string",
-                    "description": "the chinese name of departure city"
+                    "description": "the chinese name of departure city. e.g. 上海"
                 },
                 "arrivalcity": {
                     "type": "string",
-                    "description": "the chinese name of arrival city"
+                    "description": "the chinese name of arrival city. e.g. 北京"
                 }
             },
             "required": [
