@@ -141,7 +141,7 @@ function_call_list = \
     },
     "FLIGHT": {
         "name": "get_Round_trip_flight_price",
-        "description": "Get round-trip ticket prices between two cities for the next six months",
+        "description": "Get round-trip ticket prices between two cities for the next six months. Use two city names as parameters. The name of the citys must be in Chinese.",
         "parameters": {
             "type": "object",
             "properties": {
