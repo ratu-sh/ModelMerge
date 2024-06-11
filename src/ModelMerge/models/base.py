@@ -5,7 +5,7 @@ from pathlib import Path
 from collections import defaultdict
 
 from ..utils import prompt
-from ..plugins import PLUGINS
+from ..plugins.config import PLUGINS
 
 class BaseAPI:
     def __init__(
