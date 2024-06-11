@@ -547,7 +547,8 @@ class chatgpt(BaseLLM):
         self.conversation[convo_id] = [
             {"role": "system", "content": system_prompt or self.system_prompt},
         ]
-        self.plugins[convo_id] = copy.deepcopy(PLUGINS)
+        if convo_id not in self.plugins:
+            self.plugins[convo_id] = copy.deepcopy(PLUGINS)
 
     def save(self, file: str, *keys: str) -> None:
         """

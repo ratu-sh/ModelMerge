@@ -12,7 +12,7 @@ PLUGINS = {
     "CODE"   : (os.environ.get('CODE', "False") == "False") == False,
     "IMAGE"  : (os.environ.get('IMAGE', "False") == "False") == False,
     "DATE"   : (os.environ.get('DATE', "False") == "False") == False,
-    "VERSION": (os.environ.get('VERSION', "False") == "False") == False,
+    # "VERSION": (os.environ.get('VERSION', "False") == "False") == False,
     "TARVEL" : (os.environ.get('TARVEL', "False") == "False") == False,
     "FLIGHT" : (os.environ.get('FLIGHT', "False") == "False") == False,
 }
