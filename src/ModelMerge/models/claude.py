@@ -222,6 +222,7 @@ class claude3(BaseLLM):
         Reset the conversation
         """
         self.conversation[convo_id] = list()
+        self.plugins[convo_id] = copy.deepcopy(PLUGINS)
 
     def __truncate_conversation(self, convo_id: str = "default") -> None:
         """
@@ -298,11 +299,11 @@ class claude3(BaseLLM):
         }
         if self.system_prompt:
             json_post["system"] = self.system_prompt
-        if all(value == False for value in PLUGINS.values()) == False and self.use_plugins:
+        if all(value == False for value in self.plugins[convo_id].values()) == False and self.use_plugins:
             json_post.update(copy.deepcopy(claude_tools_list["base"]))
-            for item in PLUGINS.keys():
+            for item in self.plugins[convo_id].keys():
                 try:
-                    if PLUGINS[item]:
+                    if self.plugins[convo_id][item]:
                         json_post["tools"].append(claude_tools_list[item])
                 except:
                     pass

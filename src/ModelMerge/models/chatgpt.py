@@ -61,32 +61,6 @@ class chatgpt(BaseLLM):
         Initialize Chatbot with API key (from https://platform.openai.com/account/api-keys)
         """
         super().__init__(api_key, engine, api_url, system_prompt, proxy, timeout, max_tokens, temperature, top_p, presence_penalty, frequency_penalty, reply_count, truncate_limit, use_plugins=use_plugins)
-        self.max_tokens: int = max_tokens or (
-            4096
-            if "gpt-4-1106-preview" in engine or "gpt-4-0125-preview" in engine or "gpt-4-turbo" in engine or "gpt-3.5-turbo-1106" in engine or "claude" in engine or "gpt-4o" in engine
-            else 31000
-            if "gpt-4-32k" in engine
-            else 7000
-            if "gpt-4" in engine
-            else 16385
-            if "gpt-3.5-turbo-16k" in engine
-            # else 99000
-            # if "claude-2.1" in engine
-            else 4000
-        )
-        self.truncate_limit: int = truncate_limit or (
-            127500
-            if "gpt-4-1106-preview" in engine or "gpt-4-0125-preview" in engine or "gpt-4-turbo" in engine or "gpt-4o" in engine
-            else 30500
-            if "gpt-4-32k" in engine
-            else 6500
-            if "gpt-4" in engine
-            else 14500
-            if "gpt-3.5-turbo-16k" in engine or "gpt-3.5-turbo-1106" in engine
-            else 98500
-            if "claude-2.1" in engine
-            else 3500
-        )
         self.conversation: dict[str, list[dict]] = {
             "default": [
                 {
@@ -97,7 +71,6 @@ class chatgpt(BaseLLM):
         }
         self.function_calls_counter = {}
         self.function_call_max_loop = 3
-        # self.encode_web_text_list = []
 
         if self.get_token_count("default") > self.max_tokens:
             raise Exception("System prompt is too long")
@@ -288,12 +261,12 @@ class chatgpt(BaseLLM):
             "user": role,
         }
         json_post_body.update(copy.deepcopy(body))
-        if all(value == False for value in PLUGINS.values()) or self.use_plugins == False:
+        if all(value == False for value in self.plugins[convo_id].values()) or self.use_plugins == False:
             return json_post_body
         json_post_body.update(copy.deepcopy(function_call_list["base"]))
-        for item in PLUGINS.keys():
+        for item in self.plugins[convo_id].keys():
             try:
-                if PLUGINS[item]:
+                if self.plugins[convo_id][item]:
                     json_post_body["functions"].append(function_call_list[item])
             except:
                 pass
@@ -574,6 +547,7 @@ class chatgpt(BaseLLM):
         self.conversation[convo_id] = [
             {"role": "system", "content": system_prompt or self.system_prompt},
         ]
+        self.plugins[convo_id] = copy.deepcopy(PLUGINS)
 
     def save(self, file: str, *keys: str) -> None:
         """

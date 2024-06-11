@@ -5,6 +5,7 @@ from pathlib import Path
 from collections import defaultdict
 
 from ..utils import prompt
+from ..plugins import PLUGINS
 
 class BaseAPI:
     def __init__(
@@ -54,6 +55,32 @@ class BaseLLM:
         self.presence_penalty: float = presence_penalty
         self.frequency_penalty: float = frequency_penalty
         self.reply_count: int = reply_count
+        self.max_tokens: int = max_tokens or (
+            4096
+            if "gpt-4-1106-preview" in engine or "gpt-4-0125-preview" in engine or "gpt-4-turbo" in engine or "gpt-3.5-turbo-1106" in engine or "claude" in engine or "gpt-4o" in engine
+            else 31000
+            if "gpt-4-32k" in engine
+            else 7000
+            if "gpt-4" in engine
+            else 16385
+            if "gpt-3.5-turbo-16k" in engine
+            # else 99000
+            # if "claude-2.1" in engine
+            else 4000
+        )
+        self.truncate_limit: int = truncate_limit or (
+            127500
+            if "gpt-4-1106-preview" in engine or "gpt-4-0125-preview" in engine or "gpt-4-turbo" in engine or "gpt-4o" in engine
+            else 30500
+            if "gpt-4-32k" in engine
+            else 6500
+            if "gpt-4" in engine
+            else 14500
+            if "gpt-3.5-turbo-16k" in engine or "gpt-3.5-turbo-1106" in engine
+            else 98500
+            if "claude-2.1" in engine
+            else 3500
+        )
         self.timeout: float = timeout
         self.proxy = proxy
         self.session = requests.Session()
@@ -92,6 +119,9 @@ class BaseLLM:
         self.function_calls_counter = {}
         self.function_call_max_loop = 10
         self.use_plugins = use_plugins
+        self.plugins: dict[str, list[dict]] = {
+            "default": PLUGINS,
+        }
 
     def add_to_conversation(
         self,
