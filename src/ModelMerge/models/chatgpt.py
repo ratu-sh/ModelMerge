@@ -417,7 +417,7 @@ class chatgpt(BaseLLM):
                 full_response += content
                 yield content
             if "function_call" in delta:
-                # print(delta["function_call"]["arguments"], end="")
+                # print(delta["function_call"], end="")
                 need_function_call = True
                 function_call_content = delta["function_call"]["arguments"]
                 if "name" in delta["function_call"]:

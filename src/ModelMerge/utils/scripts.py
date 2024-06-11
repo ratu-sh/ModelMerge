@@ -46,8 +46,34 @@ def get_encode_image(image_url):
     os.remove(image_path)
     return prompt
 
-def Document_extract(docurl, docpath=None):
+def get_image_message(image_url, message, engine = None):
+    if image_url:
+        base64_image = get_encode_image(image_url)
+        if "gpt-4" in engine or (os.environ.get('claude_api_key', None) is None and "claude-3" in engine):
+            message.append(
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": base64_image
+                    }
+                }
+            )
+        if os.environ.get('claude_api_key', None) and "claude-3" in engine:
+            message.append(
+                {
+                    "type": "image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": "image/jpeg",
+                        "data": base64_image.split(",")[1],
+                    }
+                }
+            )
+    return message
+
+def Document_extract(docurl, docpath=None, engine = None):
     filename = docpath
+    text = None
     if "paper.pdf" != docpath:
         filename = get_doc_from_url(docurl)
         docpath = os.getcwd() + "/" + filename
@@ -57,13 +83,17 @@ def Document_extract(docurl, docpath=None):
     if filename[-3:] == "txt":
         with open(docpath, 'r') as f:
             text = f.read()
-    prompt = (
-        "Here is the document, inside <document></document> XML tags:"
-        "<document>"
-        "{}"
-        "</document>"
-    ).format(text)
-    os.remove(docpath)
+    if text:
+        prompt = (
+            "Here is the document, inside <document></document> XML tags:"
+            "<document>"
+            "{}"
+            "</document>"
+        ).format(text)
+    if filename[-3:] == "jpg" or filename[-3:] == "png" or filename[-4:] == "jpeg":
+        prompt = get_image_message(docurl, [], engine)
+    if os.path.exists(docpath):
+        os.remove(docpath)
     return prompt
 
 def check_json(json_data):
