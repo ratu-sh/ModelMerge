@@ -5,7 +5,6 @@ from pathlib import Path
 from collections import defaultdict
 
 from ..utils import prompt
-from ..plugins.config import PLUGINS
 
 class BaseAPI:
     def __init__(
@@ -119,6 +118,7 @@ class BaseLLM:
         self.function_calls_counter = {}
         self.function_call_max_loop = 10
         self.use_plugins = use_plugins
+        from ..plugins import PLUGINS
         self.plugins: dict[str, list[dict]] = {
             "default": PLUGINS,
         }
