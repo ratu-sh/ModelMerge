@@ -74,13 +74,13 @@ def get_image_message(image_url, message, engine = None):
 def Document_extract(docurl, docpath=None, engine = None):
     filename = docpath
     text = None
-    if "paper.pdf" != docpath and docpath:
+    if docpath and "paper.pdf" != docpath:
         filename = get_doc_from_url(docurl)
         docpath = os.getcwd() + "/" + filename
-    if filename[-3:] == "pdf":
+    if filename and filename[-3:] == "pdf":
         from pdfminer.high_level import extract_text
         text = extract_text(docpath)
-    if filename[-3:] == "txt":
+    if filename and filename[-3:] == "txt":
         with open(docpath, 'r') as f:
             text = f.read()
     if text:
