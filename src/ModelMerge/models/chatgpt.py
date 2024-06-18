@@ -267,7 +267,7 @@ class chatgpt(BaseLLM):
         for item in self.plugins[convo_id].keys():
             try:
                 if self.plugins[convo_id][item]:
-                    json_post_body["functions"].append(function_call_list[item])
+                    json_post_body["tools"].append({"type": "function", "function": function_call_list[item]})
             except:
                 pass
 
@@ -389,13 +389,12 @@ class chatgpt(BaseLLM):
                 content = delta["content"]
                 full_response += content
                 yield content
-            if "function_call" in delta:
-                # print(delta["function_call"], end="")
+            if "tool_calls" in delta:
                 need_function_call = True
-                function_call_content = delta["function_call"]["arguments"]
-                if "name" in delta["function_call"]:
-                    function_call_name = delta["function_call"]["name"]
-                function_full_response += function_call_content
+                function_call_content = delta["tool_calls"][0]["function"]
+                if "name" in function_call_content:
+                    function_call_name = function_call_content["name"]
+                function_full_response += function_call_content["arguments"]
                 if function_full_response.count("\\n") > 2 or "}" in function_full_response:
                     break
         if need_function_call:

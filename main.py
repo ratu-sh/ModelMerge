@@ -16,7 +16,7 @@ GROQ_API_KEY = os.environ.get('GROQ_API_KEY', None)
 current_date = datetime.now()
 Current_Date = current_date.strftime("%Y-%m-%d")
 
-message = ""
+message = "https://arxiv.org/abs/2404.02041 这篇论文讲了啥？"
 systemprompt = os.environ.get('SYSTEMPROMPT', prompt.chatgpt_system_prompt)
 # systemprompt = os.environ.get('SYSTEMPROMPT', prompt.system_prompt.format(LANGUAGE, Current_Date))
 # systemprompt = (

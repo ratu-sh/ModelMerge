@@ -1,8 +1,8 @@
 function_call_list = \
 {
     "base": {
-        "functions": [],
-        "function_call": "auto"
+        "tools": [],
+        "tool_choice": "auto"
     },
     "current_weather": {
         "name": "get_current_weather",
@@ -161,3 +161,9 @@ function_call_list = \
         }
     },
 }
+
+
+if __name__ == "__main__":
+    import json
+    tools_list = {"tools": [{"type": "function", "function": function_call_list[key]} for key in function_call_list.keys() if key != "base"]}
+    print(json.dumps(tools_list, indent=4, ensure_ascii=False))
