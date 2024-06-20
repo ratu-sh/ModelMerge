@@ -326,7 +326,12 @@ class chatgpt(BaseLLM):
             # print("response.text", response.text)
             if response.status_code == 400:
                 print("response.text", response.text)
-                if "invalid_request_error" in response.text:
+                if "function calling" in response.text:
+                    if "tools" in json_post:
+                        del json_post["tools"]
+                    if "tool_choice" in json_post:
+                        del json_post["tool_choice"]
+                elif "invalid_request_error" in response.text:
                     for index, mess in enumerate(json_post["messages"]):
                         if type(mess["content"]) == list:
                             json_post["messages"][index] = {
@@ -342,10 +347,10 @@ class chatgpt(BaseLLM):
                             "content": mess["content"]
                         }
                 else:
-                    if "function_call" in json_post:
-                        del json_post["function_call"]
-                    if "functions" in json_post:
-                        del json_post["functions"]
+                    if "tools" in json_post:
+                        del json_post["tools"]
+                    if "tool_choice" in json_post:
+                        del json_post["tool_choice"]
                 continue
             if response.status_code == 200:
                 break
@@ -389,7 +394,7 @@ class chatgpt(BaseLLM):
                 content = delta["content"]
                 full_response += content
                 yield content
-            if "tool_calls" in delta:
+            if "tool_calls" in delta and delta["tool_calls"]:
                 need_function_call = True
                 function_call_content = delta["tool_calls"][0]["function"]
                 if "name" in function_call_content:
