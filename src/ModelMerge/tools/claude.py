@@ -8,8 +8,6 @@ def gpt2claude_tools_json(json_dict):
     json_dict = copy.deepcopy(json_dict)
     keys_to_change = {
         "parameters": "input_schema",
-        "functions": "tools",
-        "function_call": None  # 如果没有新的键名，则设置为None或留空
     }
     for old_key, new_key in keys_to_change.items():
         if old_key in json_dict:
@@ -17,6 +15,10 @@ def gpt2claude_tools_json(json_dict):
                 json_dict[new_key] = json_dict.pop(old_key)
             else:
                 json_dict.pop(old_key)
+    if "tools" in json_dict.keys():
+        json_dict["tool_choice"] = {
+            "type": "auto"
+        }
     return json_dict
 
 claude_tools_list = {f"{key}": gpt2claude_tools_json(function_call_list[key]) for key in function_call_list.keys()}

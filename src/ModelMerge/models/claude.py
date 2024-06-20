@@ -381,7 +381,7 @@ class claude3(BaseLLM):
             print("function_full_response", function_full_response)
             function_response = ""
             function_call_max_tokens = int(self.truncate_limit / 2)
-            function_response = yield from get_tools_result(function_call_name, function_full_response, function_call_max_tokens, self.engine, claude3, self.api_key, self.api_url, use_plugins=False)
+            function_response = yield from get_tools_result(function_call_name, function_full_response, function_call_max_tokens, self.engine, claude3, self.api_key, self.api_url, use_plugins=False, model=model, add_message=self.add_to_conversation, convo_id=convo_id)
             response_role = "assistant"
             if self.conversation[convo_id][-1]["role"] == "function" and self.conversation[convo_id][-1]["name"] == "get_search_results":
                 mess = self.conversation[convo_id].pop(-1)
