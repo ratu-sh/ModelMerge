@@ -430,9 +430,9 @@ class chatgpt(BaseLLM):
                 mess = self.conversation[convo_id].pop(-1)
             self.add_to_conversation(full_response, response_role, convo_id=convo_id, total_tokens=total_tokens)
             self.function_calls_counter = {}
-            # self.clear_function_call(convo_id=convo_id)
-            # self.encode_web_text_list = []
-            # total_tokens = self.get_token_count(convo_id)
+            if pass_history == False and len(self.conversation[convo_id]) >= 2 and "You are a translation engine" in self.conversation[convo_id][-2]["content"][0]["text"]:
+                self.conversation[convo_id].pop(-1)
+                self.conversation[convo_id].pop(-1)
 
     async def ask_stream_async(
         self,

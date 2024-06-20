@@ -190,10 +190,9 @@ class claude3(BaseLLM):
 
         if convo_id not in self.conversation or pass_history == False:
             self.reset(convo_id=convo_id)
-        if role == "user":
+        if role == "user" or (role == "assistant" and function_full_response == ""):
             self.conversation[convo_id].append({"role": role, "content": message})
-        # if role == "function":
-        if role == "assistant" and function_full_response:
+        elif role == "assistant" and function_full_response:
             print("function_full_response", function_full_response)
             function_dict = {
                 "type": "tool_use",
@@ -210,10 +209,11 @@ class claude3(BaseLLM):
                 # "is_error": true
             }
             self.conversation[convo_id].append({"role": "user", "content": [function_dict]})
-        # index = len(self.conversation[convo_id]) - 2
-        # if index >= 0 and self.conversation[convo_id][index]["role"] == self.conversation[convo_id][index + 1]["role"]:
-        #     self.conversation[convo_id][index]["content"] += self.conversation[convo_id][index + 1]["content"]
-        #     self.conversation[convo_id].pop(index + 1)
+
+        index = len(self.conversation[convo_id]) - 2
+        if index >= 0 and self.conversation[convo_id][index]["role"] == self.conversation[convo_id][index + 1]["role"]:
+            self.conversation[convo_id][index]["content"] += self.conversation[convo_id][index + 1]["content"]
+            self.conversation[convo_id].pop(index + 1)
         if total_tokens:
             self.tokens_usage[convo_id] += total_tokens
 
@@ -271,9 +271,6 @@ class claude3(BaseLLM):
         function_full_response: str = "",
         **kwargs,
     ):
-        pass_history = True
-        if convo_id not in self.conversation or pass_history == False:
-            self.reset(convo_id=convo_id)
         self.add_to_conversation(prompt, role, convo_id=convo_id, tools_id=tools_id, total_tokens=total_tokens, function_name=function_name, function_full_response=function_full_response)
         # self.__truncate_conversation(convo_id=convo_id)
         # print(self.conversation[convo_id])
@@ -391,3 +388,6 @@ class claude3(BaseLLM):
                 mess = self.conversation[convo_id].pop(-1)
             self.add_to_conversation(full_response, response_role, convo_id=convo_id, total_tokens=total_tokens)
             self.function_calls_counter = {}
+            if pass_history == False and len(self.conversation[convo_id]) >= 2 and "You are a translation engine" in self.conversation[convo_id][-2]["content"][0]["text"]:
+                self.conversation[convo_id].pop(-1)
+                self.conversation[convo_id].pop(-1)
