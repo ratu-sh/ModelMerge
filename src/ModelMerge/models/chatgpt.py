@@ -430,7 +430,7 @@ class chatgpt(BaseLLM):
                 mess = self.conversation[convo_id].pop(-1)
             self.add_to_conversation(full_response, response_role, convo_id=convo_id, total_tokens=total_tokens)
             self.function_calls_counter = {}
-            if pass_history == False and len(self.conversation[convo_id]) >= 2 and "You are a translation engine" in self.conversation[convo_id][-2]["content"][0]["text"]:
+            if pass_history == False and len(self.conversation[convo_id]) >= 2 and ("You are a translation engine" in self.conversation[convo_id][-2]["content"] or (type(self.conversation[convo_id][-2]["content"]) == list and "You are a translation engine" in self.conversation[convo_id][-2]["content"][0]["text"])):
                 self.conversation[convo_id].pop(-1)
                 self.conversation[convo_id].pop(-1)
 
