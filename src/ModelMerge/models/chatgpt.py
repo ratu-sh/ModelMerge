@@ -89,7 +89,7 @@ class chatgpt(BaseLLM):
         if convo_id not in self.conversation:
             self.reset(convo_id=convo_id)
         if function_name == "" and message and message != None:
-            self.conversation[convo_id].append({"role": role, "content": message})
+            self.conversation[convo_id].append({"role": role, "content": [{"type": "text", "text": message}]})
         elif function_name != "" and message and message != None:
             self.conversation[convo_id].append({"role": role, "name": function_name, "content": message})
         else:
@@ -97,6 +97,13 @@ class chatgpt(BaseLLM):
             print("error: add_to_conversation message is None or empty")
             print("role", role, "function_name", function_name, "message", message)
             print('\033[0m')
+
+        index = len(self.conversation[convo_id]) - 2
+        for i in range(index):
+            if self.conversation[convo_id][i]["role"] == self.conversation[convo_id][i + 1]["role"]:
+                self.conversation[convo_id][i]["content"] += self.conversation[convo_id][i + 1]["content"]
+                self.conversation[convo_id].pop(i + 1)
+
         if total_tokens:
             self.tokens_usage[convo_id] += total_tokens
 
