@@ -191,7 +191,13 @@ class claude3(BaseLLM):
         if convo_id not in self.conversation or pass_history == False:
             self.reset(convo_id=convo_id)
         if role == "user" or (role == "assistant" and function_full_response == ""):
-            self.conversation[convo_id].append({"role": role, "content": message})
+            self.conversation[convo_id].append({
+                "role": role,
+                "content": [{
+                    "type": "text",
+                    "text": message
+                }]
+            })
         elif role == "assistant" and function_full_response:
             print("function_full_response", function_full_response)
             function_dict = {
@@ -211,9 +217,10 @@ class claude3(BaseLLM):
             self.conversation[convo_id].append({"role": "user", "content": [function_dict]})
 
         index = len(self.conversation[convo_id]) - 2
-        if index >= 0 and self.conversation[convo_id][index]["role"] == self.conversation[convo_id][index + 1]["role"]:
-            self.conversation[convo_id][index]["content"] += self.conversation[convo_id][index + 1]["content"]
-            self.conversation[convo_id].pop(index + 1)
+        for i in range(index):
+            if self.conversation[convo_id][i]["role"] == self.conversation[convo_id][i + 1]["role"]:
+                self.conversation[convo_id][i]["content"] += self.conversation[convo_id][i + 1]["content"]
+                self.conversation[convo_id].pop(i + 1)
         if total_tokens:
             self.tokens_usage[convo_id] += total_tokens
 
