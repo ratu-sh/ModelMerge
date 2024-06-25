@@ -89,7 +89,10 @@ class chatgpt(BaseLLM):
         if convo_id not in self.conversation:
             self.reset(convo_id=convo_id)
         if function_name == "" and message and message != None:
-            self.conversation[convo_id].append({"role": role, "content": [{"type": "text", "text": message}]})
+            if type(message) == str:
+                self.conversation[convo_id].append({"role": role, "content": [{"type": "text", "text": message}]})
+            if type(message) == list:
+                self.conversation[convo_id].append({"role": role, "content": message})
         elif function_name != "" and message and message != None:
             self.conversation[convo_id].append({"role": role, "name": function_name, "content": message})
         else:

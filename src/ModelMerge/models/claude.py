@@ -191,13 +191,19 @@ class claude3(BaseLLM):
         if convo_id not in self.conversation or pass_history == False:
             self.reset(convo_id=convo_id)
         if role == "user" or (role == "assistant" and function_full_response == ""):
-            self.conversation[convo_id].append({
-                "role": role,
-                "content": [{
-                    "type": "text",
-                    "text": message
-                }]
-            })
+            if type(message) == list:
+                self.conversation[convo_id].append({
+                    "role": role,
+                    "content": message
+                })
+            if type(message) == str:
+                self.conversation[convo_id].append({
+                    "role": role,
+                    "content": [{
+                        "type": "text",
+                        "text": message
+                    }]
+                })
         elif role == "assistant" and function_full_response:
             print("function_full_response", function_full_response)
             function_dict = {
