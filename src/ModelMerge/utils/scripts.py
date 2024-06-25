@@ -80,7 +80,7 @@ def Document_extract(docurl, docpath=None, engine = None):
     if filename and filename[-3:] == "pdf":
         from pdfminer.high_level import extract_text
         text = extract_text(docpath)
-    if filename and filename[-3:] == "txt":
+    if filename and (filename[-3:] == "txt" or filename[-3:] == ".md"):
         with open(docpath, 'r') as f:
             text = f.read()
     if text:
