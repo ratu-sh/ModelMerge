@@ -74,7 +74,7 @@ def get_image_message(image_url, message, engine = None):
 def Document_extract(docurl, docpath=None, engine = None):
     filename = docpath
     text = None
-    if docpath and "paper.pdf" != docpath:
+    if docpath and docurl and "paper.pdf" != docpath:
         filename = get_doc_from_url(docurl)
         docpath = os.getcwd() + "/" + filename
     if filename and filename[-3:] == "pdf":
