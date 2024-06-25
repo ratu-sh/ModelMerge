@@ -90,7 +90,7 @@ def Document_extract(docurl, docpath=None, engine = None):
             "{}"
             "</document>"
         ).format(text)
-    if filename[-3:] == "jpg" or filename[-3:] == "png" or filename[-4:] == "jpeg":
+    if filename and filename[-3:] == "jpg" or filename[-3:] == "png" or filename[-4:] == "jpeg":
         prompt = get_image_message(docurl, [], engine)
     if os.path.exists(docpath):
         os.remove(docpath)
