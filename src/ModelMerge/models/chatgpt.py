@@ -193,7 +193,13 @@ class chatgpt(BaseLLM):
                 if values:
                     for value in values:
                         # print("value", value)
-                        num_tokens += len(encoding.encode(value))
+                        try:
+                            num_tokens += len(encoding.encode(value))
+                        except:
+                            print('\033[31m')
+                            print("error value:", value)
+                            print('\033[0m')
+                            num_tokens += 0
                 if key == "name":  # if there's a name, the role is omitted
                     num_tokens += 5  # role is always required and always 1 token
         num_tokens += 5  # every reply is primed with <im_start>assistant
