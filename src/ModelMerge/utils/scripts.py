@@ -50,6 +50,11 @@ def get_image_message(image_url, message, engine = None):
     if image_url:
         base64_image = get_encode_image(image_url)
         print("os.environ.get('claude_api_key', None)", os.environ.get('claude_api_key', None))
+        print("'gpt-4' in engine or (os.environ.get('claude_api_key', None) is None and 'claude-3' in engine)", "gpt-4" in engine or (os.environ.get('claude_api_key', None) is None and "claude-3" in engine))
+        print("'gpt-4' in engine", "gpt-4" in engine)
+        print("(os.environ.get('claude_api_key', None) is None and 'claude-3' in engine)", (os.environ.get('claude_api_key', None) is None and "claude-3" in engine))
+        print("os.environ.get('claude_api_key', None) is None", os.environ.get('claude_api_key', None) is None)
+        print("'claude-3' in engine", "claude-3" in engine)
         if "gpt-4" in engine or (os.environ.get('claude_api_key', None) is None and "claude-3" in engine):
             message.append(
                 {
