@@ -222,7 +222,7 @@ class claude3(BaseLLM):
             }
             self.conversation[convo_id].append({"role": "user", "content": [function_dict]})
 
-        index = len(self.conversation[convo_id]) - 2
+        index = len(self.conversation[convo_id]) - 1
         for i in range(index):
             if self.conversation[convo_id][i]["role"] == self.conversation[convo_id][i + 1]["role"]:
                 self.conversation[convo_id][i]["content"] += self.conversation[convo_id][i + 1]["content"]
