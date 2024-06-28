@@ -20,3 +20,8 @@ def check_json(json_data):
                 json_data = '{"prompt": ' + json.dumps(json_data) + '}'
     return json_data
 print(json.loads(check_json(json_data)))
+
+a = '''
+'''
+
+print(json.loads(a))

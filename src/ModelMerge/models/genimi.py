@@ -125,7 +125,8 @@ class gemini(BaseLLM):
                 }
             ],
         }
-        replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', str(json_post)).replace("'", "\""))
+        replaced_text = re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', str(json_post)).replace("'", "\"").replace("True", "true").replace("False", "false").replace("None", "null")
+        replaced_text = json.loads(replaced_text)
         print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
 
         url = self.api_url.format(model=model or self.engine, stream="streamGenerateContent", api_key=self.api_key)
