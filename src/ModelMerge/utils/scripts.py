@@ -69,6 +69,15 @@ def get_image_message(image_url, message, engine = None):
                     }
                 }
             )
+        if os.environ.get('GOOGLE_AI_API_KEY', None) and "gemini" in engine:
+            message.append(
+                {
+                    "inlineData": {
+                        "mimeType": "image/jpeg",
+                        "data": base64_image.split(",")[1],
+                    }
+                }
+            )
     return message
 
 def Document_extract(docurl, docpath=None, engine = None):

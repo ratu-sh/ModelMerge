@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import copy
 import tiktoken
@@ -318,7 +319,8 @@ class claude3(BaseLLM):
                 except:
                     pass
 
-        print(json.dumps(json_post, indent=4, ensure_ascii=False))
+        replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', str(json_post)).replace("'", "\""))
+        print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
 
         try:
             response = self.session.post(

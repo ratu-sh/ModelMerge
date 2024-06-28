@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import requests
 import tiktoken
@@ -37,7 +38,7 @@ class gemini(BaseLLM):
         if convo_id not in self.conversation or pass_history == False:
             self.reset(convo_id=convo_id)
         # print("message", message)
-        self.conversation[convo_id].append({"role": role, "parts": [{"text": message}]})
+        self.conversation[convo_id].append({"role": role, "parts": message})
         if total_tokens:
             self.tokens_usage[convo_id] += total_tokens
 
@@ -124,7 +125,8 @@ class gemini(BaseLLM):
                 }
             ],
         }
-        print(json.dumps(json_post, indent=4, ensure_ascii=False))
+        replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', str(json_post)).replace("'", "\""))
+        print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
 
         url = self.api_url.format(model=model or self.engine, stream="streamGenerateContent", api_key=self.api_key)
 
@@ -166,4 +168,4 @@ class gemini(BaseLLM):
         except Exception as e:
             print("An error occurred:", e)
 
-        self.add_to_conversation(full_response, response_role, convo_id=convo_id)
+        self.add_to_conversation([{"text": full_response}], response_role, convo_id=convo_id)
