@@ -319,8 +319,7 @@ class claude3(BaseLLM):
                 except:
                     pass
 
-        replaced_text = re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', str(json_post)).replace("'", "\"").replace("True", "true").replace("False", "false").replace("None", "null")
-        replaced_text = json.loads(replaced_text)
+        replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', json.dumps(json_post)))
         print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
 
         try:

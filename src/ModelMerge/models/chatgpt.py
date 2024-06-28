@@ -321,8 +321,7 @@ class chatgpt(BaseLLM):
         json_post["max_tokens"] = model_max_tokens
         print("api_url", self.api_url.chat_url)
         for _ in range(2):
-            replaced_text = re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', str(json_post)).replace("'", "\"").replace("True", "true").replace("False", "false").replace("None", "null")
-            replaced_text = json.loads(replaced_text)
+            replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', json.dumps(json_post)))
             print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
             try:
                 response = self.session.post(
