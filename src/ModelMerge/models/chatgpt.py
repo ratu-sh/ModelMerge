@@ -371,6 +371,16 @@ class chatgpt(BaseLLM):
                     if "tool_choice" in json_post:
                         del json_post["tool_choice"]
                 continue
+            if response.status_code == 503:
+                print("response.text", response.text)
+                if "Sorry, server is busy" in response.text:
+                    for index, mess in enumerate(json_post["messages"]):
+                        if type(mess["content"]) == list:
+                            json_post["messages"][index] = {
+                                "role": mess["role"],
+                                "content": mess["content"][0]["text"]
+                            }
+                continue
             if response.status_code == 200:
                 break
         if response.status_code != 200:
