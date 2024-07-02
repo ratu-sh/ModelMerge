@@ -101,11 +101,15 @@ class chatgpt(BaseLLM):
             print("role", role, "function_name", function_name, "message", message)
             print('\033[0m')
 
-        index = len(self.conversation[convo_id]) - 2
-        for i in range(index):
-            if self.conversation[convo_id][i]["role"] == self.conversation[convo_id][i + 1]["role"]:
-                self.conversation[convo_id][i]["content"] += self.conversation[convo_id][i + 1]["content"]
-                self.conversation[convo_id].pop(i + 1)
+        conversation_len = len(self.conversation[convo_id]) - 1
+        message_index = 0
+        while message_index < conversation_len:
+            if self.conversation[convo_id][message_index]["role"] == self.conversation[convo_id][message_index + 1]["role"]:
+                self.conversation[convo_id][message_index]["content"] += self.conversation[convo_id][message_index + 1]["content"]
+                self.conversation[convo_id].pop(message_index + 1)
+                conversation_len = conversation_len - 1
+            else:
+                message_index = message_index + 1
 
         if total_tokens:
             self.tokens_usage[convo_id] += total_tokens
