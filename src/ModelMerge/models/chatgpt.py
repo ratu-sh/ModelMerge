@@ -342,7 +342,7 @@ class chatgpt(BaseLLM):
                 print("请求超时，请检查网络连接或增加超时时间。{e}")
                 return
             except Exception as e:
-                print("发生了未预料的错误：{e}")
+                print(f"发生了未预料的错误：{e}")
                 if "Invalid URL" in str(e):
                     e = "You have entered an invalid API URL, please use the correct URL and use the `/start` command to set the API URL again. Specific error is as follows:\n\n" + str(e)
                     raise Exception(f"{e}")
