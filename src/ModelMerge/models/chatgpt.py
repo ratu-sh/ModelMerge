@@ -379,7 +379,7 @@ class chatgpt(BaseLLM):
                 print("response.text", response.text)
                 if "Sorry, server is busy" in response.text:
                     for index, mess in enumerate(json_post["messages"]):
-                        if type(mess["content"]) == list:
+                        if type(mess["content"]) == list and "text" in mess["content"][0]:
                             json_post["messages"][index] = {
                                 "role": mess["role"],
                                 "content": mess["content"][0]["text"]
