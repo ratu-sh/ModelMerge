@@ -323,7 +323,17 @@ class chatgpt(BaseLLM):
         model_max_tokens = kwargs.get("max_tokens", self.max_tokens)
         print("model_max_tokens", model_max_tokens)
         json_post["max_tokens"] = model_max_tokens
-        print("api_url", self.api_url.chat_url)
+        # print("api_url", self.api_url.chat_url)
+        # if "tools" in json_post:
+        #     del json_post["tools"]
+        # if "tool_choice" in json_post:
+        #     del json_post["tool_choice"]
+        # for index, mess in enumerate(json_post["messages"]):
+        #     if type(mess["content"]) == list and "text" in mess["content"][0]:
+        #         json_post["messages"][index] = {
+        #             "role": mess["role"],
+        #             "content": mess["content"][0]["text"]
+        #         }
         for _ in range(2):
             replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', json.dumps(json_post)))
             print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
@@ -356,7 +366,7 @@ class chatgpt(BaseLLM):
                         del json_post["tool_choice"]
                 elif "invalid_request_error" in response.text:
                     for index, mess in enumerate(json_post["messages"]):
-                        if type(mess["content"]) == list:
+                        if type(mess["content"]) == list and "text" in mess["content"][0]:
                             json_post["messages"][index] = {
                                 "role": mess["role"],
                                 "content": mess["content"][0]["text"]
@@ -386,7 +396,17 @@ class chatgpt(BaseLLM):
                             }
                 continue
             if response.status_code == 200:
-                break
+                if response.text == "":
+                    for index, mess in enumerate(json_post["messages"]):
+                        if type(mess["content"]) == list and "text" in mess["content"][0]:
+                            json_post["messages"][index] = {
+                                "role": mess["role"],
+                                "content": mess["content"][0]["text"]
+                            }
+                    continue
+                else:
+                    break
+        # print("response.status_code", response.text)
         if response.status_code != 200:
             raise Exception(f"{response.status_code} {response.reason} {response.text}")
         response_role: str = None
