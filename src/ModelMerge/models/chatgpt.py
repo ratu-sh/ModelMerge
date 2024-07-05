@@ -604,6 +604,7 @@ class chatgpt(BaseLLM):
         self.conversation[convo_id] = [
             {"role": "system", "content": system_prompt or self.system_prompt},
         ]
+        self.system_prompt = system_prompt or self.system_prompt
         if convo_id not in self.plugins:
             self.plugins[convo_id] = copy.deepcopy(PLUGINS)
 

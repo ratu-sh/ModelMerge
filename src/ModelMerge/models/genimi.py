@@ -47,6 +47,7 @@ class gemini(BaseLLM):
         Reset the conversation
         """
         self.conversation[convo_id] = list()
+        self.system_prompt = system_prompt or self.system_prompt
 
     def __truncate_conversation(self, convo_id: str = "default") -> None:
         """
