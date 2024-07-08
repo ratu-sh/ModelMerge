@@ -261,7 +261,7 @@ class chatgpt(BaseLLM):
     ):
         json_post_body = {
             "model": model or self.engine,
-            "messages": self.conversation[convo_id] if pass_history else [{"role": "system","content": self.system_prompt},{"role": role, "content": prompt}],
+            "messages": self.conversation[convo_id] if pass_history else [{"role": "system","content": self.system_prompt[convo_id]},{"role": role, "content": prompt}],
             "max_tokens": 5000,
             "stream": True,
         }
@@ -316,7 +316,7 @@ class chatgpt(BaseLLM):
         """
         # Make conversation if it doesn't exist
         if convo_id not in self.conversation or pass_history == False:
-            self.reset(convo_id=convo_id, system_prompt=self.system_prompt)
+            self.reset(convo_id=convo_id, system_prompt=self.system_prompt[convo_id])
         self.add_to_conversation(prompt, role, convo_id=convo_id, function_name=function_name, total_tokens=total_tokens)
         json_post, message_token = self.truncate_conversation(prompt, role, convo_id, model, pass_history, **kwargs)
         # print(self.conversation[convo_id])
@@ -505,7 +505,7 @@ class chatgpt(BaseLLM):
         """
         # Make conversation if it doesn't exist
         if convo_id not in self.conversation or pass_history == False:
-            self.reset(convo_id=convo_id, system_prompt=self.system_prompt)
+            self.reset(convo_id=convo_id, system_prompt=self.system_prompt[convo_id])
         self.add_to_conversation(prompt, "user", convo_id=convo_id)
         self.__truncate_conversation(convo_id=convo_id)
         if self.engine == "gpt-4-1106-preview" or "gpt-4-0125-preview" in self.engine or "gpt-4-turbo" in self.engine:
@@ -519,7 +519,7 @@ class chatgpt(BaseLLM):
             headers={"Authorization": f"Bearer {kwargs.get('api_key', self.api_key)}"},
             json={
                 "model": model or self.engine,
-                "messages": self.conversation[convo_id] if pass_history else [{"role": "system","content": self.system_prompt},{"role": role, "content": prompt}],
+                "messages": self.conversation[convo_id] if pass_history else [{"role": "system","content": self.system_prompt[convo_id]},{"role": role, "content": prompt}],
                 "stream": True,
                 # kwargs
                 "temperature": kwargs.get("temperature", self.temperature),
@@ -605,10 +605,10 @@ class chatgpt(BaseLLM):
         """
         Reset the conversation
         """
+        self.system_prompt[convo_id] = system_prompt or self.system_prompt[convo_id]
         self.conversation[convo_id] = [
-            {"role": "system", "content": system_prompt or self.system_prompt},
+            {"role": "system", "content": system_prompt or self.system_prompt[convo_id]},
         ]
-        self.system_prompt = system_prompt or self.system_prompt
         if convo_id not in self.plugins:
             self.plugins[convo_id] = copy.deepcopy(PLUGINS)
 

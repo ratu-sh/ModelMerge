@@ -46,7 +46,7 @@ class BaseLLM:
         self.api_key: str = api_key
         self.engine: str = engine
         self.api_url: str = BaseAPI(api_url or "https://api.openai.com/v1/chat/completions")
-        self.system_prompt: str = system_prompt
+        self.system_prompt: dict = defaultdict(lambda: system_prompt)
         self.max_tokens: int = max_tokens
         self.truncate_limit: int = truncate_limit
         self.temperature: float = temperature
@@ -248,7 +248,7 @@ class BaseLLM:
         Reset the conversation
         """
         self.conversation[convo_id] = [
-            {"role": "system", "content": system_prompt or self.system_prompt},
+            {"role": "system", "content": system_prompt or self.system_prompt[convo_id]},
         ]
 
     def save(self, file: str, *keys: str) -> None:

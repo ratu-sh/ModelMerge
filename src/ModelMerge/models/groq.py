@@ -41,7 +41,7 @@ class groq(BaseLLM):
         Reset the conversation
         """
         self.conversation[convo_id] = list()
-        self.system_prompt = system_prompt or self.system_prompt
+        self.system_prompt[convo_id] = system_prompt or self.system_prompt[convo_id]
 
     def __truncate_conversation(self, convo_id: str = "default") -> None:
         """

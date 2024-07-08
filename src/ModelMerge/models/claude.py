@@ -54,8 +54,8 @@ class claude(BaseLLM):
         Reset the conversation
         """
         self.conversation[convo_id] = claudeConversation()
-        self.system_prompt = system_prompt or self.system_prompt
-        
+        self.system_prompt[convo_id] = system_prompt or self.system_prompt[convo_id]
+
     def __truncate_conversation(self, convo_id: str = "default") -> None:
         """
         Truncate the conversation
@@ -242,7 +242,7 @@ class claude3(BaseLLM):
         """
         self.conversation[convo_id] = list()
         self.plugins[convo_id] = copy.deepcopy(PLUGINS)
-        self.system_prompt = system_prompt or self.system_prompt
+        self.system_prompt[convo_id] = system_prompt or self.system_prompt[convo_id]
 
     def __truncate_conversation(self, convo_id: str = "default") -> None:
         """
@@ -314,8 +314,8 @@ class claude3(BaseLLM):
             "max_tokens": model_max_tokens,
             "stream": True,
         }
-        if self.system_prompt:
-            json_post["system"] = self.system_prompt
+        if self.system_prompt[convo_id]:
+            json_post["system"] = self.system_prompt[convo_id]
         if all(value == False for value in self.plugins[convo_id].values()) == False and self.use_plugins:
             json_post.update(copy.deepcopy(claude_tools_list["base"]))
             for item in self.plugins[convo_id].keys():
