@@ -337,6 +337,7 @@ class chatgpt(BaseLLM):
         for _ in range(2):
             replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', json.dumps(json_post)))
             print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
+            response = None
             try:
                 response = self.session.post(
                     self.api_url.chat_url,
@@ -357,7 +358,7 @@ class chatgpt(BaseLLM):
                     e = "You have entered an invalid API URL, please use the correct URL and use the `/start` command to set the API URL again. Specific error is as follows:\n\n" + str(e)
                     raise Exception(f"{e}")
             # print("response.text", response.text)
-            if response.status_code == 400:
+            if response and response.status_code == 400:
                 print("response.text", response.text)
                 if "function calling" in response.text:
                     if "tools" in json_post:
@@ -385,7 +386,7 @@ class chatgpt(BaseLLM):
                     if "tool_choice" in json_post:
                         del json_post["tool_choice"]
                 continue
-            if response.status_code == 503:
+            if response and response.status_code == 503:
                 print("response.text", response.text)
                 if "Sorry, server is busy" in response.text:
                     for index, mess in enumerate(json_post["messages"]):
@@ -395,7 +396,7 @@ class chatgpt(BaseLLM):
                                 "content": mess["content"][0]["text"]
                             }
                 continue
-            if response.status_code == 200:
+            if response and response.status_code == 200:
                 if response.text == "":
                     for index, mess in enumerate(json_post["messages"]):
                         if type(mess["content"]) == list and "text" in mess["content"][0]:
@@ -407,8 +408,11 @@ class chatgpt(BaseLLM):
                 else:
                     break
         # print("response.status_code", response.text)
-        if response.status_code != 200:
+        if response and response.status_code != 200:
             raise Exception(f"{response.status_code} {response.reason} {response.text}")
+        if response is None:
+            raise Exception(f"response is None, please check the connection or network.")
+
         response_role: str = None
         full_response: str = ""
         function_full_response: str = ""
