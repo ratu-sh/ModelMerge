@@ -86,6 +86,7 @@ class chatgpt(BaseLLM):
         """
         Add a message to the conversation
         """
+        # print("role", role, "function_name", function_name, "message", message)
         if convo_id not in self.conversation:
             self.reset(convo_id=convo_id)
         if function_name == "" and message and message != None:
@@ -143,11 +144,14 @@ class chatgpt(BaseLLM):
         """
         while True:
             json_post = self.get_post_body(prompt, role, convo_id, model, pass_history, **kwargs)
-            url = self.api_url.chat_url
+            # url = self.api_url.chat_url
             # if "gpt-4" in self.engine or "claude" in self.engine or (CUSTOM_MODELS and self.engine in CUSTOM_MODELS):
             message_token = {
-                "total": self.get_token_count(convo_id),
+                "total": 0,
             }
+            # message_token = {
+            #     "total": self.get_token_count(convo_id),
+            # }
             # else:
             #     message_token = self.get_message_token(url, json_post)
             print("message_token", message_token, "truncate_limit", self.truncate_limit)
@@ -422,7 +426,7 @@ class chatgpt(BaseLLM):
         for line in response.iter_lines():
             if not line or line.decode("utf-8").startswith(':'):
                 continue
-            # print(line.decode("utf-8"))
+            print(line.decode("utf-8"))
             if line.decode("utf-8").startswith('data:'):
                 line = line.decode("utf-8")[6:]
             else:
