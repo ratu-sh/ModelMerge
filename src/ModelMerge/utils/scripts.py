@@ -49,7 +49,7 @@ def get_encode_image(image_url):
 def get_image_message(image_url, message, engine = None):
     if image_url:
         base64_image = get_encode_image(image_url)
-        if "gpt-4" in engine or (os.environ.get('claude_api_key', None) is None and "claude-3" in engine):
+        if "gpt-4" in engine or (os.environ.get('claude_api_key', None) is None and "claude-3" in engine) or (os.environ.get('GOOGLE_AI_API_KEY', None) is None and "gemini" in engine):
             message.append(
                 {
                     "type": "image_url",

@@ -422,7 +422,7 @@ class chatgpt(BaseLLM):
         for line in response.iter_lines():
             if not line or line.decode("utf-8").startswith(':'):
                 continue
-            # print("line.decode('utf-8')", line.decode("utf-8"))
+            # print(line.decode("utf-8"))
             if line.decode("utf-8").startswith('data:'):
                 line = line.decode("utf-8")[6:]
             else:
