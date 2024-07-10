@@ -428,7 +428,9 @@ class chatgpt(BaseLLM):
                 continue
             print(line.decode("utf-8"))
             if line.decode("utf-8").startswith('data:'):
-                line = line.decode("utf-8")[6:]
+                line = line.decode("utf-8")[5:]
+                if line.startswith(" "):
+                    line = line[1:]
             else:
                 # print("line", line.decode("utf-8"))
                 full_response = json.loads(line.decode("utf-8"))["choices"][0]["message"]["content"]
