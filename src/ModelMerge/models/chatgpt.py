@@ -82,6 +82,7 @@ class chatgpt(BaseLLM):
         convo_id: str = "default",
         function_name: str = "",
         total_tokens: int = 0,
+        function_arguments: str = "",
     ) -> None:
         """
         Add a message to the conversation
@@ -95,7 +96,7 @@ class chatgpt(BaseLLM):
             if type(message) == list:
                 self.conversation[convo_id].append({"role": role, "content": message})
         elif function_name != "" and message and message != None:
-            self.conversation[convo_id].append({"role": role, "name": function_name, "content": message})
+            self.conversation[convo_id].append({"role": role, "name": function_name, "arguments": function_arguments, "content": message})
         else:
             print('\033[31m')
             print("error: add_to_conversation message is None or empty")
@@ -104,9 +105,11 @@ class chatgpt(BaseLLM):
 
         conversation_len = len(self.conversation[convo_id]) - 1
         message_index = 0
+        # print(json.dumps(self.conversation[convo_id], indent=4, ensure_ascii=False))
         while message_index < conversation_len:
             if self.conversation[convo_id][message_index]["role"] == self.conversation[convo_id][message_index + 1]["role"]:
-                self.conversation[convo_id][message_index]["content"] += self.conversation[convo_id][message_index + 1]["content"]
+                if self.conversation[convo_id][message_index].get("content"):
+                    self.conversation[convo_id][message_index]["content"] += self.conversation[convo_id][message_index + 1]["content"]
                 self.conversation[convo_id].pop(message_index + 1)
                 conversation_len = conversation_len - 1
             else:
@@ -313,6 +316,7 @@ class chatgpt(BaseLLM):
         pass_history: bool = True,
         function_name: str = "",
         total_tokens: int = 0,
+        function_arguments: str = "",
         **kwargs,
     ):
         """
@@ -321,7 +325,7 @@ class chatgpt(BaseLLM):
         # Make conversation if it doesn't exist
         if convo_id not in self.conversation or pass_history == False:
             self.reset(convo_id=convo_id, system_prompt=self.system_prompt[convo_id])
-        self.add_to_conversation(prompt, role, convo_id=convo_id, function_name=function_name, total_tokens=total_tokens)
+        self.add_to_conversation(prompt, role, convo_id=convo_id, function_name=function_name, total_tokens=total_tokens, function_arguments=function_arguments)
         json_post, message_token = self.truncate_conversation(prompt, role, convo_id, model, pass_history, **kwargs)
         # print(self.conversation[convo_id])
         model_max_tokens = kwargs.get("max_tokens", self.max_tokens)
@@ -426,7 +430,7 @@ class chatgpt(BaseLLM):
         for line in response.iter_lines():
             if not line or line.decode("utf-8").startswith(':'):
                 continue
-            print(line.decode("utf-8"))
+            # print(line.decode("utf-8"))
             if line.decode("utf-8").startswith('data:'):
                 line = line.decode("utf-8")[5:]
                 if line.startswith(" "):
@@ -487,7 +491,7 @@ class chatgpt(BaseLLM):
             if self.conversation[convo_id][-1]["role"] == "function" and self.conversation[convo_id][-1]["name"] == "get_search_results":
                 mess = self.conversation[convo_id].pop(-1)
                 # print("Truncate message:", mess)
-            yield from self.ask_stream(function_response, response_role, convo_id=convo_id, function_name=function_call_name, total_tokens=total_tokens, model=model)
+            yield from self.ask_stream(function_response, response_role, convo_id=convo_id, function_name=function_call_name, total_tokens=total_tokens, model=model, function_arguments=function_full_response)
         else:
             if self.conversation[convo_id][-1]["role"] == "function" and self.conversation[convo_id][-1]["name"] == "get_search_results":
                 mess = self.conversation[convo_id].pop(-1)
