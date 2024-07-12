@@ -20,6 +20,7 @@ PLUGINS = {
 LANGUAGE = os.environ.get('LANGUAGE', 'Simplified Chinese')
 
 def get_tools_result(function_call_name, function_full_response, function_call_max_tokens, engine, robot, api_key, api_url, use_plugins, model, add_message, convo_id):
+    function_response = ""
     if function_call_name == "get_search_results":
         prompt = json.loads(function_full_response)["prompt"]
         yield "🌐 正在搜索您的问题，提取关键词..."
