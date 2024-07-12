@@ -149,14 +149,23 @@ class chatgpt(BaseLLM):
             json_post = self.get_post_body(prompt, role, convo_id, model, pass_history, **kwargs)
             # url = self.api_url.chat_url
             # if "gpt-4" in self.engine or "claude" in self.engine or (CUSTOM_MODELS and self.engine in CUSTOM_MODELS):
-            message_token = {
-                "total": 0,
-            }
             # message_token = {
-            #     "total": self.get_token_count(convo_id),
+            #     "total": 0,
             # }
-            # else:
-            #     message_token = self.get_message_token(url, json_post)
+            try:
+                message_token = {
+                    "total": self.get_token_count(convo_id),
+                }
+                if "gpt-3.5" in self.engine:
+                    message_token = self.get_message_token(self.api_url, json_post)
+            except:
+                print('\033[31m')
+                print("error: get_message_token")
+                print('\033[0m')
+                message_token = {
+                    "total": 0,
+                }
+
             print("message_token", message_token, "truncate_limit", self.truncate_limit)
             if (
                 message_token["total"] > self.truncate_limit
