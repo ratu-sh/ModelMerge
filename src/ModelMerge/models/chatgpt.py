@@ -2,6 +2,7 @@ import os
 import re
 import json
 import copy
+from typing import Union
 from pathlib import Path
 from typing import AsyncGenerator, Set
 
@@ -77,7 +78,7 @@ class chatgpt(BaseLLM):
 
     def add_to_conversation(
         self,
-        message: list,
+        message: Union[str, list],
         role: str,
         convo_id: str = "default",
         function_name: str = "",
