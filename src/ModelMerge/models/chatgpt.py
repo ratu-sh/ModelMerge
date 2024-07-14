@@ -476,6 +476,8 @@ class chatgpt(BaseLLM):
                 function_full_response += function_call_content["arguments"]
                 if function_full_response.count("\\n") > 2 or "}" in function_full_response:
                     break
+        if response_role == None:
+            response_role = "assistant"
         if need_function_call:
             function_full_response = check_json(function_full_response)
             print("function_full_response", function_full_response)
