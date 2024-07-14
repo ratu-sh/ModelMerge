@@ -92,10 +92,7 @@ class chatgpt(BaseLLM):
         if convo_id not in self.conversation:
             self.reset(convo_id=convo_id)
         if function_name == "" and message and message != None:
-            if type(message) == str:
-                self.conversation[convo_id].append({"role": role, "content": [{"type": "text", "text": message}]})
-            if type(message) == list:
-                self.conversation[convo_id].append({"role": role, "content": message})
+            self.conversation[convo_id].append({"role": role, "content": message})
         elif function_name != "" and message and message != None:
             self.conversation[convo_id].append({"role": role, "name": function_name, "arguments": function_arguments, "content": message})
         else:
@@ -425,8 +422,8 @@ class chatgpt(BaseLLM):
                     continue
                 else:
                     break
-        # print("response.status_code", response.text)
-        if response and response.status_code != 200:
+        # print("response.status_code", response.status_code, response.text)
+        if response != None and response.status_code != 200:
             raise Exception(f"{response.status_code} {response.reason} {response.text}")
         if response is None:
             raise Exception(f"response is None, please check the connection or network.")
