@@ -446,8 +446,13 @@ class chatgpt(BaseLLM):
                     line = line[1:]
             else:
                 # print("line", line.decode("utf-8"))
-                full_response = json.loads(line.decode("utf-8"))["choices"][0]["message"]["content"]
-                yield full_response
+                if json.loads(line.decode("utf-8")).get("choices") \
+                and json.loads(line.decode("utf-8"))["choices"][0].get("message") \
+                and json.loads(line.decode("utf-8"))["choices"][0]["message"].get("content"):
+                    full_response = json.loads(line.decode("utf-8"))["choices"][0]["message"]["content"]
+                    yield full_response
+                else:
+                    yield line.decode("utf-8")
                 break
             if line == "[DONE]":
                 break
