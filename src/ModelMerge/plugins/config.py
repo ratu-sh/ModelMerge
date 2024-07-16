@@ -13,8 +13,8 @@ PLUGINS = {
     "IMAGE"  : (os.environ.get('IMAGE', "False") == "False") == False,
     "DATE"   : (os.environ.get('DATE', "False") == "False") == False,
     # "VERSION": (os.environ.get('VERSION', "False") == "False") == False,
-    "TARVEL" : (os.environ.get('TARVEL', "False") == "False") == False,
-    "FLIGHT" : (os.environ.get('FLIGHT', "False") == "False") == False,
+    # "TARVEL" : (os.environ.get('TARVEL', "False") == "False") == False,
+    # "FLIGHT" : (os.environ.get('FLIGHT', "False") == "False") == False,
 }
 
 LANGUAGE = os.environ.get('LANGUAGE', 'Simplified Chinese')
