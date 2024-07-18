@@ -296,15 +296,16 @@ class claude3(BaseLLM):
         # print(self.conversation[convo_id])
 
         url = self.api_url.source_api_url
+        now_model = model or self.engine
         headers = {
             "content-type": "application/json",
             "x-api-key": f"{kwargs.get('api_key', self.api_key)}",
             "anthropic-version": "2023-06-01",
-            "anthropic-beta": "tools-2024-05-16"
+            "anthropic-beta": "max-tokens-3-5-sonnet-2024-07-15" if "claude-3-5-sonnet" in now_model else "tools-2024-05-16",
         }
 
         json_post = {
-            "model": model or self.engine,
+            "model": now_model,
             "messages": self.conversation[convo_id] if pass_history else [{
                 "role": "user",
                 "content": prompt
