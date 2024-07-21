@@ -107,7 +107,8 @@ class chatgpt(BaseLLM):
         while message_index < conversation_len:
             if self.conversation[convo_id][message_index]["role"] == self.conversation[convo_id][message_index + 1]["role"]:
                 if self.conversation[convo_id][message_index].get("content"):
-                    if type(self.conversation[convo_id][message_index + 1]["content"]) == str:
+                    if type(self.conversation[convo_id][message_index + 1]["content"]) == str \
+                    and type(self.conversation[convo_id][message_index]["content"]) == list:
                         self.conversation[convo_id][message_index + 1]["content"] = [{"type": "text", "text": self.conversation[convo_id][message_index + 1]["content"]}]
                     self.conversation[convo_id][message_index]["content"] += self.conversation[convo_id][message_index + 1]["content"]
                 self.conversation[convo_id].pop(message_index + 1)
