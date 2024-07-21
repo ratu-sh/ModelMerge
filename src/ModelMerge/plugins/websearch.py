@@ -155,7 +155,7 @@ def sort_by_time(urls):
     return sorted_urls
 
 def get_search_url(keywords, search_url_num):
-    yield "🌐 正在网上挑选最相关的信息源，请稍候..."
+    yield "🌐 message_search_stage_2"
 
     search_threads = []
     search_thread = ThreadWithReturnValue(target=getgooglesearchurl, args=(keywords[0],search_url_num,))
@@ -191,7 +191,7 @@ def get_url_text_list(keywords, search_url_num):
 
     url_set_list, url_pdf_set_list = yield from get_search_url(keywords, search_url_num)
 
-    yield "🌐 已找到一些有用的链接，正在获取详细内容..."
+    yield "🌐 message_search_stage_3"
     threads = []
     for url in url_set_list:
         # url_search_thread = ThreadWithReturnValue(target=jina_ai_Web_crawler, args=(url,True,))
@@ -201,7 +201,7 @@ def get_url_text_list(keywords, search_url_num):
 
     url_text_list = concat_url(threads)
 
-    yield "🌐 快完成了✅，正在为您整理搜索结果..."
+    yield "🌐 message_search_stage_4"
     end_time = record_time.time()
     run_time = end_time - start_time
     print("urls", url_set_list)
