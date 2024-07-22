@@ -12,10 +12,10 @@ class BaseAPI:
         api_url: str = (os.environ.get("API_URL", None) or "https://api.openai.com/v1/chat/completions"),
     ):
         from urllib.parse import urlparse, urlunparse
-        if api_url is None:
-            raise Exception("API_URL is not set")
         self.source_api_url: str = api_url
         parsed_url = urlparse(self.source_api_url)
+        if parsed_url.scheme == "":
+            raise Exception("Error: API_URL is not set")
         if parsed_url.path != '/':
             before_v1 = parsed_url.path.split("/v1")[0]
         else:

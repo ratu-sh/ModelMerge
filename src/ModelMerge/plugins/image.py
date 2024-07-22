@@ -10,7 +10,7 @@ class dalle3(BaseLLM):
     def __init__(
         self,
         api_key: str,
-        api_url: str = (os.environ.get("API_URL") or "https://api.openai.com/v1/chat/completions"),
+        api_url: str = (os.environ.get("API_URL") or "https://api.openai.com/v1/images/generations"),
         timeout: float = 20,
     ):
         super().__init__(api_key, api_url=api_url, timeout=timeout)
@@ -56,6 +56,6 @@ class dalle3(BaseLLM):
         yield url
 
 def generate_image(text):
-    dallbot = dalle3(api_key=f"{API}", api_url=f"{API_URL}")
+    dallbot = dalle3(api_key=f"{API}")
     for data in dallbot.generate(text):
         return data
