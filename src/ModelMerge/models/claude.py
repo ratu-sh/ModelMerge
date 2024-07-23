@@ -365,7 +365,9 @@ class claude3(BaseLLM):
             #     tool_input = json.loads(line.decode("utf-8")["content"][1]["input"])
             # else:
             #     line = line.decode("utf-8")[6:]
-            line = line.decode("utf-8")[6:]
+            line = line.decode("utf-8")[5:]
+            if line.startswith(" "):
+                line = line[1:]
             # print(line)
             resp: dict = json.loads(line)
             message = resp.get("message")
