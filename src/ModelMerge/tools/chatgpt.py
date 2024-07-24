@@ -109,7 +109,7 @@ function_call_list = \
     },
     "CODE": {
         "name": "run_python_script",
-        "description": "Convert the string to a Python script and return the Python execution result. Assign the result to the variable result. Directly output the code, without using quotation marks or other symbols to enclose the code.",
+        "description": "Convert the string to a Python script and return the Python execution result. Assign the result to the variable result. The results must be printed to the console using the print function. Directly output the code, without using quotation marks or other symbols to enclose the code.",
         "parameters": {
             "type": "object",
             "properties": {

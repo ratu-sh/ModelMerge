@@ -19,14 +19,16 @@ PLUGINS = {
 
 LANGUAGE = os.environ.get('LANGUAGE', 'Simplified Chinese')
 
-def get_tools_result(function_call_name, function_full_response, function_call_max_tokens, engine, robot, api_key, api_url, use_plugins, model, add_message, convo_id):
+async def get_tools_result(function_call_name, function_full_response, function_call_max_tokens, engine, robot, api_key, api_url, use_plugins, model, add_message, convo_id):
     function_response = ""
     if function_call_name == "get_search_results":
         prompt = json.loads(function_full_response)["prompt"]
         yield "🌐 message_search_stage_1"
         llm = robot(api_key=api_key, api_url=api_url.source_api_url, engine=engine, use_plugins=use_plugins)
         keywords = llm.ask(search_key_word_prompt.format(source=prompt), model=model).split("\n")
-        function_response = yield from eval(function_call_name)(prompt, keywords)
+        async for chunk in eval(function_call_name)(prompt, keywords):
+            function_response = yield chunk
+        # function_response = yield from eval(function_call_name)(prompt, keywords)
         function_call_max_tokens = 32000
         function_response, text_len = cut_message(function_response, function_call_max_tokens, engine)
         if function_response:
@@ -82,7 +84,7 @@ def get_tools_result(function_call_name, function_full_response, function_call_m
         function_response, text_len = cut_message(function_response, function_call_max_tokens, engine)
     if function_call_name == "run_python_script":
         prompt = json.loads(function_full_response)["prompt"]
-        function_response = eval(function_call_name)(prompt)
+        function_response = await eval(function_call_name)(prompt)
         function_response, text_len = cut_message(function_response, function_call_max_tokens, engine)
     if function_call_name == "get_date_time_weekday":
         function_response = eval(function_call_name)()
@@ -90,4 +92,5 @@ def get_tools_result(function_call_name, function_full_response, function_call_m
     if function_call_name == "get_version_info":
         function_response = eval(function_call_name)()
         function_response, text_len = cut_message(function_response, function_call_max_tokens, engine)
-    return function_response
+    yield function_response
+    # return function_response
