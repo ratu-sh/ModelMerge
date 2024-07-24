@@ -215,7 +215,7 @@ class BaseLLM:
         """
         pass
 
-    def ask(
+    async def ask(
         self,
         prompt: str,
         role: str = "user",
@@ -227,14 +227,23 @@ class BaseLLM:
         """
         Non-streaming ask
         """
-        response = self.ask_stream(
+        async for chunk in self.ask_stream(
             prompt=prompt,
             role=role,
             convo_id=convo_id,
             model=model,
             pass_history=pass_history,
             **kwargs,
-        )
+        ):
+            response = chunk
+        # response = await self.ask_stream(
+        #     prompt=prompt,
+        #     role=role,
+        #     convo_id=convo_id,
+        #     model=model,
+        #     pass_history=pass_history,
+        #     **kwargs,
+        # )
         full_response: str = "".join(response)
         return full_response
 

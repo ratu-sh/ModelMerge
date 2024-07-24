@@ -154,7 +154,7 @@ def sort_by_time(urls):
 
     return sorted_urls
 
-def get_search_url(keywords, search_url_num):
+async def get_search_url(keywords, search_url_num):
     yield "🌐 message_search_stage_2"
 
     search_threads = []
@@ -175,7 +175,8 @@ def get_search_url(keywords, search_url_num):
     url_pdf_set_list = [item for item in url_set_list if item.endswith(".pdf")]
     url_set_list = [item for item in url_set_list if not item.endswith(".pdf")]
     # cut_num = int(len(url_set_list) * 1 / 3)
-    return url_set_list[:6], url_pdf_set_list
+    yield url_set_list[:6], url_pdf_set_list
+    # return url_set_list[:6], url_pdf_set_list
     # return url_set_list, url_pdf_set_list
 
 def concat_url(threads):
@@ -186,10 +187,15 @@ def concat_url(threads):
             url_result.append(tmp)
     return url_result
 
-def get_url_text_list(keywords, search_url_num):
+async def get_url_text_list(keywords, search_url_num):
     start_time = record_time.time()
 
-    url_set_list, url_pdf_set_list = yield from get_search_url(keywords, search_url_num)
+    async for chunk in get_search_url(keywords, search_url_num):
+        if type(chunk) == str:
+            yield chunk
+        else:
+            url_set_list, url_pdf_set_list = chunk
+    # url_set_list, url_pdf_set_list = yield from get_search_url(keywords, search_url_num)
 
     yield "🌐 message_search_stage_3"
     threads = []
@@ -207,10 +213,11 @@ def get_url_text_list(keywords, search_url_num):
     print("urls", url_set_list)
     print(f"搜索用时：{run_time}秒")
 
-    return url_text_list
+    yield url_text_list
+    # return url_text_list
 
 # Plugins 搜索入口
-def get_search_results(prompt: str, keywords):
+async def get_search_results(prompt: str, keywords):
     print("keywords", keywords)
     keywords = [item.replace("三行关键词是：", "") for item in keywords if "\\x" not in item if item != ""]
     keywords = [prompt] + keywords
@@ -224,9 +231,17 @@ def get_search_results(prompt: str, keywords):
     if len(keywords) == 1:
         search_url_num = 12
 
-    url_text_list = yield from get_url_text_list(keywords, search_url_num)
-    useful_source_text = "\n\n".join(url_text_list)
-    return useful_source_text
+    url_text_list = []
+    async for chunk in get_url_text_list(keywords, search_url_num):
+        if type(chunk) == str:
+            yield chunk
+        else:
+            url_text_list = chunk
+        # url_text_list = yield chunk
+    # url_text_list = yield from get_url_text_list(keywords, search_url_num)
+    # useful_source_text = "\n\n".join(url_text_list)
+    yield url_text_list
+    # return useful_source_text
 
 if __name__ == "__main__":
     os.system("clear")

@@ -10,7 +10,7 @@ def check_code_safety(code):
 
 async def run_python_script(code, timeout=10):
     if not check_code_safety(code):
-        return "Code contains potentially dangerous operations.\n"
+        return "Code contains potentially dangerous operations.\n\n"
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as temp_file:
         temp_file.write(code)
