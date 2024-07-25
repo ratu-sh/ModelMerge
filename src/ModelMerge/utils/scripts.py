@@ -80,6 +80,22 @@ def get_image_message(image_url, message, engine = None):
             )
     return message
 
+from io import BytesIO
+def get_audio_message(file_bytes):
+    try:
+        # 创建一个字节流对象
+        audio_stream = BytesIO(file_bytes)
+
+        # 直接使用字节流对象进行转录
+        import config
+        transcript = config.whisperBot.generate(audio_stream)
+        # print("transcript", transcript)
+
+        return transcript
+
+    except Exception as e:
+        return f"处理音频文件时出错： {str(e)}"
+
 def Document_extract(docurl, docpath=None, engine = None):
     filename = docpath
     text = None
@@ -101,6 +117,16 @@ def Document_extract(docurl, docpath=None, engine = None):
         ).format(text)
     if filename and filename[-3:] == "jpg" or filename[-3:] == "png" or filename[-4:] == "jpeg":
         prompt = get_image_message(docurl, [], engine)
+    if filename and filename[-3:] == "wav" or filename[-3:] == "mp3":
+        with open(docpath, "rb") as file:
+            file_bytes = file.read()
+        prompt = get_audio_message(file_bytes)
+        prompt = (
+            "Here is the text content after voice-to-text conversion, inside <voice-to-text></voice-to-text> XML tags:"
+            "<voice-to-text>"
+            "{}"
+            "</voice-to-text>"
+        ).format(prompt)
     if os.path.exists(docpath):
         os.remove(docpath)
     return prompt
