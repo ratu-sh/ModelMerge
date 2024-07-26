@@ -227,6 +227,7 @@ class BaseLLM:
         """
         Non-streaming ask
         """
+        response = ""
         async for chunk in self.ask_stream(
             prompt=prompt,
             role=role,
@@ -235,7 +236,7 @@ class BaseLLM:
             pass_history=pass_history,
             **kwargs,
         ):
-            response = chunk
+            response += chunk
         # response = await self.ask_stream(
         #     prompt=prompt,
         #     role=role,
