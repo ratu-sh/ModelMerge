@@ -379,7 +379,8 @@ class chatgpt(BaseLLM):
                     e = "You have entered an invalid API URL, please use the correct URL and use the `/start` command to set the API URL again. Specific error is as follows:\n\n" + str(e)
                     raise Exception(f"{e}")
             # print("response.text", response.text)
-            if response and response.status_code == 400:
+            # print("response.status_code", response.status_code, response.status_code == 400, response and response.status_code == 400, response.text)
+            if response != None and response.status_code == 400:
                 print("response.text", response.text)
                 if "function calling" in response.text:
                     if "tools" in json_post:
@@ -441,9 +442,9 @@ class chatgpt(BaseLLM):
         need_function_call: bool = False
         total_tokens = 0
         for line in response.iter_lines():
+            # print(line.decode("utf-8"))
             if not line or line.decode("utf-8").startswith(':'):
                 continue
-            # print(line.decode("utf-8"))
             if line.decode("utf-8").startswith('data:'):
                 line = line.decode("utf-8")[5:]
                 if line.startswith(" "):
