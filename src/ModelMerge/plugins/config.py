@@ -96,5 +96,8 @@ async def get_tools_result(function_call_name, function_full_response, function_
     if function_call_name == "get_version_info":
         function_response = eval(function_call_name)()
         function_response, text_len = cut_message(function_response, function_call_max_tokens, engine)
+    function_response = (
+        f"function_response:{function_response}"
+    )
     yield function_response
     # return function_response
