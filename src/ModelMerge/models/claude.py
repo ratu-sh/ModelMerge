@@ -403,8 +403,9 @@ class claude3(BaseLLM):
             function_response = ""
             function_call_max_tokens = int(self.truncate_limit / 2)
             async for chunk in get_tools_result(function_call_name, function_full_response, function_call_max_tokens, self.engine, claude3, self.api_key, self.api_url, use_plugins=False, model=model, add_message=self.add_to_conversation, convo_id=convo_id):
-                function_response = chunk
-                if "Here is the Search results, inside <Search_results></Search_results> XML tags:" not in chunk:
+                if "function_response:" in chunk:
+                    function_response = chunk.replace("function_response:", "")
+                else:
                     yield chunk
             # function_response = yield from get_tools_result(function_call_name, function_full_response, function_call_max_tokens, self.engine, claude3, self.api_key, self.api_url, use_plugins=False, model=model, add_message=self.add_to_conversation, convo_id=convo_id)
             response_role = "assistant"

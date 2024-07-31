@@ -15,6 +15,12 @@ def gpt2claude_tools_json(json_dict):
                 json_dict[new_key] = json_dict.pop(old_key)
             else:
                 json_dict.pop(old_key)
+        else:
+            if new_key and "description" in json_dict.keys():
+                json_dict[new_key] = {
+                    "type": "object",
+                    "properties": {}
+                }
     if "tools" in json_dict.keys():
         json_dict["tool_choice"] = {
             "type": "auto"

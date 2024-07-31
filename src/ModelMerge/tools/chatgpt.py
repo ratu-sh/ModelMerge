@@ -62,18 +62,10 @@ function_call_list = \
     "DATE": {
         "name": "get_date_time_weekday",
         "description": "Get the current time, date, and day of the week",
-        "parameters": {
-            "type": "object",
-            "properties": {}
-        }
     },
     "VERSION": {
         "name": "get_version_info",
         "description": "Get version information",
-        "parameters": {
-            "type": "object",
-            "properties": {}
-        }
     },
     "TARVEL": {
         "name": "get_city_tarvel_info",
