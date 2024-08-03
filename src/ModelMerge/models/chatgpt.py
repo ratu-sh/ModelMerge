@@ -330,6 +330,7 @@ class chatgpt(BaseLLM):
         function_name: str = "",
         total_tokens: int = 0,
         function_arguments: str = "",
+        language: str = "English",
         **kwargs,
     ):
         """
@@ -380,7 +381,7 @@ class chatgpt(BaseLLM):
                     raise Exception(f"{e}")
             # print("response.text", response.text)
             # print("response.status_code", response.status_code, response.status_code == 400, response and response.status_code == 400, response.text)
-            if response != None and response.status_code == 400:
+            if response != None and (response.status_code == 400 or response.status_code == 422):
                 print("response.text", response.text)
                 if "function calling" in response.text:
                     if "tools" in json_post:
@@ -504,13 +505,11 @@ class chatgpt(BaseLLM):
                 if function_call_max_tokens <= 0:
                     function_call_max_tokens = int(self.truncate_limit / 2)
                 print("\033[32m function_call", function_call_name, "max token:", function_call_max_tokens, "\033[0m")
-                async for chunk in get_tools_result(function_call_name, function_full_response, function_call_max_tokens, self.engine, chatgpt, self.api_key, self.api_url, use_plugins=False, model=model, add_message=self.add_to_conversation, convo_id=convo_id):
+                async for chunk in get_tools_result(function_call_name, function_full_response, function_call_max_tokens, self.engine, chatgpt, self.api_key, self.api_url, use_plugins=False, model=model, add_message=self.add_to_conversation, convo_id=convo_id, language=language):
                     if "function_response:" in chunk:
                         function_response = chunk.replace("function_response:", "")
                     else:
                         yield chunk
-                # function_response = await get_tools_result(function_call_name, function_full_response, function_call_max_tokens, self.engine, chatgpt, self.api_key, self.api_url, use_plugins=False, model=model, add_message=self.add_to_conversation, convo_id=convo_id)
-                # function_response = yield from await get_tools_result(function_call_name, function_full_response, function_call_max_tokens, self.engine, chatgpt, self.api_key, self.api_url, use_plugins=False, model=model, add_message=self.add_to_conversation, convo_id=convo_id)
             else:
                 function_response = "无法找到相关信息，停止使用 tools"
             response_role = "function"
@@ -526,7 +525,25 @@ class chatgpt(BaseLLM):
                 mess = self.conversation[convo_id].pop(-1)
             self.add_to_conversation(full_response, response_role, convo_id=convo_id, total_tokens=total_tokens)
             self.function_calls_counter = {}
-            if pass_history == False and len(self.conversation[convo_id]) >= 2 and ("You are a translation engine" in self.conversation[convo_id][-2]["content"] or (type(self.conversation[convo_id][-2]["content"]) == list and "You are a translation engine" in self.conversation[convo_id][-2]["content"][0]["text"])):
+            if pass_history == False and len(self.conversation[convo_id]) >= 2 \
+            and (
+                "You are a translation engine" in self.conversation[convo_id][-2]["content"] \
+                or (
+                    type(self.conversation[convo_id][-2]["content"]) == list \
+                    and "You are a translation engine" in self.conversation[convo_id][-2]["content"][0]["text"]
+                )
+            ):
+                self.conversation[convo_id].pop(-1)
+                self.conversation[convo_id].pop(-1)
+
+            if pass_history == False and len(self.conversation[convo_id]) >= 2 \
+            and (
+                "你是一位精通简体中文的专业翻译" in self.conversation[convo_id][-2]["content"] \
+                or (
+                    type(self.conversation[convo_id][-2]["content"]) == list \
+                    and "你是一位精通简体中文的专业翻译" in self.conversation[convo_id][-2]["content"][0]["text"]
+                )
+            ):
                 self.conversation[convo_id].pop(-1)
                 self.conversation[convo_id].pop(-1)
 

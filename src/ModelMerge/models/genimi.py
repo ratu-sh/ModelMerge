@@ -11,8 +11,8 @@ class gemini(BaseLLM):
         self,
         api_key: str,
         engine: str = os.environ.get("GPT_ENGINE") or "gemini-1.5-pro-latest",
-        api_url: str = "https://generativelanguage.googleapis.com/v1/models/{model}:{stream}?key={api_key}",
-        system_prompt: str = "You are ChatGPT, a large language model trained by OpenAI. Respond conversationally",
+        api_url: str = "https://generativelanguage.googleapis.com/v1beta/models/{model}:{stream}?key={api_key}",
+        system_prompt: str = "You are Gemini, a large language model trained by Google. Respond conversationally",
         temperature: float = 0.5,
         top_p: float = 0.7,
         timeout: float = 20,
@@ -38,6 +38,8 @@ class gemini(BaseLLM):
         if convo_id not in self.conversation or pass_history == False:
             self.reset(convo_id=convo_id)
         # print("message", message)
+        if isinstance(message, str):
+            message = [{"text": message}]
         self.conversation[convo_id].append({"role": role, "parts": message})
         if total_tokens:
             self.tokens_usage[convo_id] += total_tokens
@@ -81,7 +83,7 @@ class gemini(BaseLLM):
         num_tokens += 5  # every reply is primed with <im_start>assistant
         return num_tokens
 
-    def ask_stream(
+    async def ask_stream(
         self,
         prompt: str,
         role: str = "user",
@@ -93,7 +95,7 @@ class gemini(BaseLLM):
     ):
         pass_history = True
         if convo_id not in self.conversation or pass_history == False:
-            self.reset(convo_id=convo_id)
+            self.reset(convo_id=convo_id, system_prompt=self.system_prompt[convo_id])
         self.add_to_conversation(prompt, role, convo_id=convo_id)
         # self.__truncate_conversation(convo_id=convo_id)
         # print(self.conversation[convo_id])
@@ -107,6 +109,7 @@ class gemini(BaseLLM):
                 "role": "user",
                 "content": prompt
             }],
+            "systemInstruction": {"parts": [{"text": self.system_prompt[convo_id]}]},
             "safetySettings": [
                 {
                     "category": "HARM_CATEGORY_HARASSMENT",
