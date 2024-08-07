@@ -36,6 +36,7 @@ def Web_crawler(url: str, isSearch=False) -> str:
             print("Skipping large file:", url)
             return result
         soup = BeautifulSoup(response.text.encode(response.encoding), 'lxml', from_encoding='utf-8')
+        # print("soup", soup)
 
         table_contents = ""
         tables = soup.find_all('table')
@@ -54,6 +55,7 @@ def Web_crawler(url: str, isSearch=False) -> str:
         print("error url", url)
         print("error", e)
         print('\033[0m')
+        result = "抱歉，目前无法访问该网页。"
     # print("url content", result + "\n\n")
     return result
 
