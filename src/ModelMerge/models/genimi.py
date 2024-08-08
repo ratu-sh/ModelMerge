@@ -16,8 +16,10 @@ class gemini(BaseLLM):
         temperature: float = 0.5,
         top_p: float = 0.7,
         timeout: float = 20,
+        convo_id: str = "default",
     ):
         super().__init__(api_key, engine, system_prompt=system_prompt, timeout=timeout, temperature=temperature, top_p=top_p)
+        self.system_prompt[convo_id] = system_prompt
         self.api_url = api_url
         self.conversation: dict[str, list[dict]] = {
             "default": [],
@@ -44,7 +46,7 @@ class gemini(BaseLLM):
         if total_tokens:
             self.tokens_usage[convo_id] += total_tokens
 
-    def reset(self, convo_id: str = "default", system_prompt: str = None) -> None:
+    def reset(self, convo_id: str = "default", system_prompt: str = "You are Gemini, a large language model trained by Google. Respond conversationally") -> None:
         """
         Reset the conversation
         """

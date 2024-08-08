@@ -26,8 +26,10 @@ class claude(BaseLLM):
         top_p: float = 0.7,
         timeout: float = 20,
         use_plugins: bool = True,
+        convo_id: str = "default",
     ):
         super().__init__(api_key, engine, api_url, system_prompt, timeout=timeout, temperature=temperature, top_p=top_p, use_plugins=use_plugins)
+        self.system_prompt[convo_id] = system_prompt
         # self.api_url = api_url
         self.conversation = claudeConversation()
 
@@ -169,8 +171,10 @@ class claude3(BaseLLM):
         timeout: float = 20,
         top_p: float = 0.7,
         use_plugins: bool = True,
+        convo_id: str = "default",
     ):
         super().__init__(api_key, engine, api_url, system_prompt, timeout=timeout, temperature=temperature, top_p=top_p, use_plugins=use_plugins)
+        self.system_prompt[convo_id] = system_prompt
         self.conversation: dict[str, list[dict]] = {
             "default": [],
         }

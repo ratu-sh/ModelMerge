@@ -57,16 +57,18 @@ class chatgpt(BaseLLM):
         reply_count: int = 1,
         truncate_limit: int = None,
         use_plugins: bool = True,
+        convo_id: str = "default",
     ) -> None:
         """
         Initialize Chatbot with API key (from https://platform.openai.com/account/api-keys)
         """
         super().__init__(api_key, engine, api_url, system_prompt, proxy, timeout, max_tokens, temperature, top_p, presence_penalty, frequency_penalty, reply_count, truncate_limit, use_plugins=use_plugins)
+        self.system_prompt[convo_id] = system_prompt
         self.conversation: dict[str, list[dict]] = {
             "default": [
                 {
                     "role": "system",
-                    "content": system_prompt,
+                    "content": self.system_prompt[convo_id],
                 },
             ],
         }
@@ -657,7 +659,7 @@ class chatgpt(BaseLLM):
         for _ in range(n):
             self.conversation[convo_id].pop()
 
-    def reset(self, convo_id: str = "default", system_prompt: str = None) -> None:
+    def reset(self, convo_id: str = "default", system_prompt: str = "You are ChatGPT, a large language model trained by OpenAI. Respond conversationally") -> None:
         """
         Reset the conversation
         """

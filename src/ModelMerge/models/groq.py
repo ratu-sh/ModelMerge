@@ -15,8 +15,10 @@ class groq(BaseLLM):
         temperature: float = 0.5,
         top_p: float = 1,
         timeout: float = 20,
+        convo_id: str = "default",
     ):
         super().__init__(api_key, engine, api_url, system_prompt, timeout=timeout, temperature=temperature, top_p=top_p)
+        self.system_prompt[convo_id] = system_prompt
         self.api_url = api_url
 
     def add_to_conversation(
