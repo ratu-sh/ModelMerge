@@ -101,6 +101,7 @@ class groq(BaseLLM):
             "Content-Type": "application/json",
         }
 
+        self.conversation[convo_id][0] = {"role": "system","content": self.system_prompt[convo_id]}
         json_post = {
             "messages": self.conversation[convo_id] if pass_history else [{
                 "role": "user",
