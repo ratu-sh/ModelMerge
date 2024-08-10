@@ -281,6 +281,7 @@ class chatgpt(BaseLLM):
         pass_history: bool = True,
         **kwargs,
     ):
+        self.conversation[convo_id][0] = {"role": "system","content": self.system_prompt[convo_id]}
         json_post_body = {
             "model": model or self.engine,
             "messages": self.conversation[convo_id] if pass_history else [{"role": "system","content": self.system_prompt[convo_id]},{"role": role, "content": prompt}],
