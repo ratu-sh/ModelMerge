@@ -347,6 +347,8 @@ class chatgpt(BaseLLM):
         # print(self.conversation[convo_id])
         model_max_tokens = kwargs.get("max_tokens", self.max_tokens)
         print("model_max_tokens", model_max_tokens)
+        print("api_url", kwargs.get('api_url', self.api_url.chat_url))
+        print("api_key", kwargs.get('api_key', self.api_key))
         json_post["max_tokens"] = model_max_tokens
         # print("api_url", self.api_url.chat_url)
         # if "tools" in json_post:
@@ -365,7 +367,7 @@ class chatgpt(BaseLLM):
             response = None
             try:
                 response = self.session.post(
-                    self.api_url.chat_url,
+                    kwargs.get('api_url', self.api_url.chat_url),
                     headers={"Authorization": f"Bearer {kwargs.get('api_key', self.api_key)}"},
                     json=json_post,
                     timeout=kwargs.get("timeout", self.timeout),
