@@ -11,8 +11,10 @@ class BaseAPI:
         self,
         api_url: str = (os.environ.get("API_URL", None) or "https://api.openai.com/v1/chat/completions"),
     ):
-        from urllib.parse import urlparse, urlunparse
+        if api_url == "":
+            api_url = "https://api.openai.com/v1/chat/completions"
         self.source_api_url: str = api_url
+        from urllib.parse import urlparse, urlunparse
         parsed_url = urlparse(self.source_api_url)
         if parsed_url.scheme == "":
             raise Exception("Error: API_URL is not set")
