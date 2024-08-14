@@ -30,19 +30,28 @@ class gemini(BaseLLM):
         message: str,
         role: str,
         convo_id: str = "default",
-        pass_history: bool = True,
+        pass_history: int = 9999,
         total_tokens: int = 0,
     ) -> None:
         """
         Add a message to the conversation
         """
 
-        if convo_id not in self.conversation or pass_history == False:
+        if convo_id not in self.conversation or pass_history == 0:
             self.reset(convo_id=convo_id)
         # print("message", message)
         if isinstance(message, str):
             message = [{"text": message}]
         self.conversation[convo_id].append({"role": role, "parts": message})
+
+        history_len = len(self.conversation[convo_id])
+        history = pass_history
+        if pass_history < 2:
+            history = 2
+        while history_len > history:
+            self.conversation[convo_id].pop(1)
+            history_len = history_len - 1
+
         if total_tokens:
             self.tokens_usage[convo_id] += total_tokens
 
@@ -91,14 +100,13 @@ class gemini(BaseLLM):
         role: str = "user",
         convo_id: str = "default",
         model: str = None,
-        pass_history: bool = True,
+        pass_history: int = 9999,
         model_max_tokens: int = 4096,
         **kwargs,
     ):
-        pass_history = True
-        if convo_id not in self.conversation or pass_history == False:
+        if convo_id not in self.conversation or pass_history == 0:
             self.reset(convo_id=convo_id, system_prompt=self.system_prompt[convo_id])
-        self.add_to_conversation(prompt, role, convo_id=convo_id)
+        self.add_to_conversation(prompt, role, convo_id=convo_id, pass_history=pass_history)
         # self.__truncate_conversation(convo_id=convo_id)
         # print(self.conversation[convo_id])
 
@@ -174,4 +182,4 @@ class gemini(BaseLLM):
         except Exception as e:
             print("An error occurred:", e)
 
-        self.add_to_conversation([{"text": full_response}], response_role, convo_id=convo_id)
+        self.add_to_conversation([{"text": full_response}], response_role, convo_id=convo_id, pass_history=pass_history)

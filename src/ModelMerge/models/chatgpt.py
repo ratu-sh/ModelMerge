@@ -86,6 +86,7 @@ class chatgpt(BaseLLM):
         function_name: str = "",
         total_tokens: int = 0,
         function_arguments: str = "",
+        pass_history: int = 9999,
     ) -> None:
         """
         Add a message to the conversation
@@ -121,6 +122,15 @@ class chatgpt(BaseLLM):
             else:
                 message_index = message_index + 1
 
+        history_len = len(self.conversation[convo_id])
+
+        history = pass_history
+        if pass_history < 2:
+            history = 2
+        while history_len > history:
+            self.conversation[convo_id].pop(1)
+            history_len = history_len - 1
+
         if total_tokens:
             self.tokens_usage[convo_id] += total_tokens
 
@@ -145,7 +155,7 @@ class chatgpt(BaseLLM):
         role: str = "user",
         convo_id: str = "default",
         model: str = None,
-        pass_history: bool = True,
+        pass_history: int = 9999,
         **kwargs,
     ) -> None:
         """
@@ -278,7 +288,7 @@ class chatgpt(BaseLLM):
         role: str = "user",
         convo_id: str = "default",
         model: str = None,
-        pass_history: bool = True,
+        pass_history: int = 9999,
         **kwargs,
     ):
         self.conversation[convo_id][0] = {"role": "system","content": self.system_prompt[convo_id]}
@@ -329,7 +339,7 @@ class chatgpt(BaseLLM):
         role: str = "user",
         convo_id: str = "default",
         model: str = None,
-        pass_history: bool = True,
+        pass_history: int = 9999,
         function_name: str = "",
         total_tokens: int = 0,
         function_arguments: str = "",
@@ -340,9 +350,9 @@ class chatgpt(BaseLLM):
         Ask a question
         """
         # Make conversation if it doesn't exist
-        if convo_id not in self.conversation or pass_history == False:
+        if convo_id not in self.conversation or pass_history == 0:
             self.reset(convo_id=convo_id, system_prompt=self.system_prompt[convo_id])
-        self.add_to_conversation(prompt, role, convo_id=convo_id, function_name=function_name, total_tokens=total_tokens, function_arguments=function_arguments)
+        self.add_to_conversation(prompt, role, convo_id=convo_id, function_name=function_name, total_tokens=total_tokens, function_arguments=function_arguments, pass_history=pass_history)
         json_post, message_token = self.truncate_conversation(prompt, role, convo_id, model, pass_history, **kwargs)
         # print(self.conversation[convo_id])
         model_max_tokens = kwargs.get("max_tokens", self.max_tokens)
@@ -528,9 +538,9 @@ class chatgpt(BaseLLM):
         else:
             if self.conversation[convo_id][-1]["role"] == "function" and self.conversation[convo_id][-1]["name"] == "get_search_results":
                 mess = self.conversation[convo_id].pop(-1)
-            self.add_to_conversation(full_response, response_role, convo_id=convo_id, total_tokens=total_tokens)
+            self.add_to_conversation(full_response, response_role, convo_id=convo_id, total_tokens=total_tokens, pass_history=pass_history)
             self.function_calls_counter = {}
-            if pass_history == False and len(self.conversation[convo_id]) >= 2 \
+            if pass_history == 0 and len(self.conversation[convo_id]) >= 2 \
             and (
                 "You are a translation engine" in self.conversation[convo_id][-2]["content"] \
                 or (
@@ -541,7 +551,7 @@ class chatgpt(BaseLLM):
                 self.conversation[convo_id].pop(-1)
                 self.conversation[convo_id].pop(-1)
 
-            if pass_history == False and len(self.conversation[convo_id]) >= 2 \
+            if pass_history == 0 and len(self.conversation[convo_id]) >= 2 \
             and (
                 "你是一位精通简体中文的专业翻译" in self.conversation[convo_id][-2]["content"] \
                 or (
@@ -558,16 +568,16 @@ class chatgpt(BaseLLM):
         role: str = "user",
         convo_id: str = "default",
         model: str = None,
-        pass_history: bool = True,
+        pass_history: int = 9999,
         **kwargs,
     ) -> AsyncGenerator[str, None]:
         """
         Ask a question
         """
         # Make conversation if it doesn't exist
-        if convo_id not in self.conversation or pass_history == False:
+        if convo_id not in self.conversation or pass_history == 0:
             self.reset(convo_id=convo_id, system_prompt=self.system_prompt[convo_id])
-        self.add_to_conversation(prompt, "user", convo_id=convo_id)
+        self.add_to_conversation(prompt, "user", convo_id=convo_id, pass_history=pass_history)
         self.__truncate_conversation(convo_id=convo_id)
         if self.engine == "gpt-4-1106-preview" or "gpt-4-0125-preview" in self.engine or "gpt-4-turbo" in self.engine:
             model_max_tokens = kwargs.get("max_tokens", self.max_tokens)
@@ -631,7 +641,7 @@ class chatgpt(BaseLLM):
                     content: str = delta["content"]
                     full_response += content
                     yield content
-        self.add_to_conversation(full_response, response_role, convo_id=convo_id)
+        self.add_to_conversation(full_response, response_role, convo_id=convo_id, pass_history=pass_history)
         print("total tokens:", self.get_token_count(convo_id))
 
     async def ask_async(
@@ -640,7 +650,7 @@ class chatgpt(BaseLLM):
         role: str = "user",
         convo_id: str = "default",
         model: str = None,
-        pass_history: bool = True,
+        pass_history: int = 9999,
         **kwargs,
     ) -> str:
         """

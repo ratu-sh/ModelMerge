@@ -26,15 +26,24 @@ class groq(BaseLLM):
         message: str,
         role: str,
         convo_id: str = "default",
-        pass_history: bool = True,
+        pass_history: int = 9999,
         total_tokens: int = 0,
     ) -> None:
         """
         Add a message to the conversation
         """
-        if convo_id not in self.conversation or pass_history == False:
+        if convo_id not in self.conversation or pass_history == 0:
             self.reset(convo_id=convo_id)
         self.conversation[convo_id].append({"role": role, "content": message})
+
+        history_len = len(self.conversation[convo_id])
+        history = pass_history
+        if pass_history < 2:
+            history = 2
+        while history_len > history:
+            self.conversation[convo_id].pop(1)
+            history_len = history_len - 1
+
         if total_tokens:
             self.tokens_usage[convo_id] += total_tokens
 
@@ -84,14 +93,13 @@ class groq(BaseLLM):
         role: str = "user",
         convo_id: str = "default",
         model: str = None,
-        pass_history: bool = True,
+        pass_history: int = 9999,
         model_max_tokens: int = 1024,
         **kwargs,
     ):
-        pass_history = True
-        if convo_id not in self.conversation or pass_history == False:
+        if convo_id not in self.conversation or pass_history == 0:
             self.reset(convo_id=convo_id)
-        self.add_to_conversation(prompt, role, convo_id=convo_id)
+        self.add_to_conversation(prompt, role, convo_id=convo_id, pass_history=pass_history)
         # self.__truncate_conversation(convo_id=convo_id)
         # print(self.conversation[convo_id])
 
@@ -168,4 +176,4 @@ class groq(BaseLLM):
                 content = delta["content"]
                 full_response += content
                 yield content
-        self.add_to_conversation(full_response, response_role, convo_id=convo_id)
+        self.add_to_conversation(full_response, response_role, convo_id=convo_id, pass_history=pass_history)
