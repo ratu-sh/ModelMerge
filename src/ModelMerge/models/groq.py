@@ -78,7 +78,7 @@ class groq(BaseLLM):
         num_tokens += 5  # every reply is primed with <im_start>assistant
         return num_tokens
 
-    def ask_stream(
+    async def ask_stream(
         self,
         prompt: str,
         role: str = "user",
