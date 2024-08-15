@@ -350,7 +350,7 @@ class chatgpt(BaseLLM):
         Ask a question
         """
         # Make conversation if it doesn't exist
-        if convo_id not in self.conversation or pass_history == 0:
+        if convo_id not in self.conversation or pass_history <= 2:
             self.reset(convo_id=convo_id, system_prompt=self.system_prompt[convo_id])
         self.add_to_conversation(prompt, role, convo_id=convo_id, function_name=function_name, total_tokens=total_tokens, function_arguments=function_arguments, pass_history=pass_history)
         json_post, message_token = self.truncate_conversation(prompt, role, convo_id, model, pass_history, **kwargs)
@@ -540,7 +540,7 @@ class chatgpt(BaseLLM):
                 mess = self.conversation[convo_id].pop(-1)
             self.add_to_conversation(full_response, response_role, convo_id=convo_id, total_tokens=total_tokens, pass_history=pass_history)
             self.function_calls_counter = {}
-            if pass_history == 0 and len(self.conversation[convo_id]) >= 2 \
+            if pass_history <= 2 and len(self.conversation[convo_id]) >= 2 \
             and (
                 "You are a translation engine" in self.conversation[convo_id][-2]["content"] \
                 or (
@@ -551,7 +551,7 @@ class chatgpt(BaseLLM):
                 self.conversation[convo_id].pop(-1)
                 self.conversation[convo_id].pop(-1)
 
-            if pass_history == 0 and len(self.conversation[convo_id]) >= 2 \
+            if pass_history <= 2 and len(self.conversation[convo_id]) >= 2 \
             and (
                 "你是一位精通简体中文的专业翻译" in self.conversation[convo_id][-2]["content"] \
                 or (
@@ -575,7 +575,7 @@ class chatgpt(BaseLLM):
         Ask a question
         """
         # Make conversation if it doesn't exist
-        if convo_id not in self.conversation or pass_history == 0:
+        if convo_id not in self.conversation or pass_history <= 2:
             self.reset(convo_id=convo_id, system_prompt=self.system_prompt[convo_id])
         self.add_to_conversation(prompt, "user", convo_id=convo_id, pass_history=pass_history)
         self.__truncate_conversation(convo_id=convo_id)

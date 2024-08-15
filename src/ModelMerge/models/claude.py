@@ -45,7 +45,7 @@ class claude(BaseLLM):
         Add a message to the conversation
         """
 
-        if convo_id not in self.conversation or pass_history == 0:
+        if convo_id not in self.conversation or pass_history <= 2:
             self.reset(convo_id=convo_id)
         self.conversation[convo_id].append({"role": role, "content": message})
 
@@ -110,7 +110,7 @@ class claude(BaseLLM):
         model_max_tokens: int = 4096,
         **kwargs,
     ):
-        if convo_id not in self.conversation or pass_history == 0:
+        if convo_id not in self.conversation or pass_history <= 2:
             self.reset(convo_id=convo_id)
         self.add_to_conversation(prompt, role, convo_id=convo_id, pass_history=pass_history)
         # self.__truncate_conversation(convo_id=convo_id)
@@ -202,7 +202,7 @@ class claude3(BaseLLM):
         Add a message to the conversation
         """
 
-        if convo_id not in self.conversation or pass_history == 0:
+        if convo_id not in self.conversation or pass_history <= 2:
             self.reset(convo_id=convo_id)
         if role == "user" or (role == "assistant" and function_full_response == ""):
             if type(message) == list:
@@ -440,6 +440,6 @@ class claude3(BaseLLM):
                 mess = self.conversation[convo_id].pop(-1)
             self.add_to_conversation(full_response, response_role, convo_id=convo_id, total_tokens=total_tokens, pass_history=pass_history)
             self.function_calls_counter = {}
-            if pass_history == 0 and len(self.conversation[convo_id]) >= 2 and ("You are a translation engine" in self.conversation[convo_id][-2]["content"] or (type(self.conversation[convo_id][-2]["content"]) == list and "You are a translation engine" in self.conversation[convo_id][-2]["content"][0]["text"])):
+            if pass_history <= 2 and len(self.conversation[convo_id]) >= 2 and ("You are a translation engine" in self.conversation[convo_id][-2]["content"] or (type(self.conversation[convo_id][-2]["content"]) == list and "You are a translation engine" in self.conversation[convo_id][-2]["content"][0]["text"])):
                 self.conversation[convo_id].pop(-1)
                 self.conversation[convo_id].pop(-1)

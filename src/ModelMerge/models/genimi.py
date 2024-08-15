@@ -37,7 +37,7 @@ class gemini(BaseLLM):
         Add a message to the conversation
         """
 
-        if convo_id not in self.conversation or pass_history == 0:
+        if convo_id not in self.conversation or pass_history <= 2:
             self.reset(convo_id=convo_id)
         # print("message", message)
         if isinstance(message, str):
@@ -104,7 +104,7 @@ class gemini(BaseLLM):
         model_max_tokens: int = 4096,
         **kwargs,
     ):
-        if convo_id not in self.conversation or pass_history == 0:
+        if convo_id not in self.conversation or pass_history <= 2:
             self.reset(convo_id=convo_id, system_prompt=self.system_prompt[convo_id])
         self.add_to_conversation(prompt, role, convo_id=convo_id, pass_history=pass_history)
         # self.__truncate_conversation(convo_id=convo_id)
