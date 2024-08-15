@@ -141,13 +141,17 @@ def check_json(json_data):
             print("JSON body", repr(json_data))
             if "Invalid control character" in str(e):
                 json_data = json_data.replace("\n", "\\n")
-            if "Unterminated string starting" in str(e):
+            elif "Unterminated string starting" in str(e):
                 json_data += '"}'
-            if "Expecting ',' delimiter" in str(e):
+            elif "Expecting ',' delimiter" in str(e):
                 json_data += '}'
-            if "Expecting value: line 1 column 1" in str(e):
+            elif "Expecting ':' delimiter" in str(e):
+                json_data = '{"prompt": ' + json.dumps(json_data) + '}'
+            elif "Expecting value: line 1 column 1" in str(e):
                 if json_data.startswith("prompt: "):
                     json_data = json_data.replace("prompt: ", "")
+                json_data = '{"prompt": ' + json.dumps(json_data) + '}'
+            else:
                 json_data = '{"prompt": ' + json.dumps(json_data) + '}'
     return json_data
 
