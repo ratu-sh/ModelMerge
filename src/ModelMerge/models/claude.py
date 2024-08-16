@@ -392,12 +392,26 @@ class claude3(BaseLLM):
                 line = line[1:]
             # print(line)
             resp: dict = json.loads(line)
+            if resp.get("error"):
+                print("error:", resp["error"])
+                raise BaseException(f"{resp['error']}")
+
             message = resp.get("message")
             if message:
-                tokens_use = resp.get("usage")
-                if tokens_use:
-                    total_tokens = tokens_use["input_tokens"] + tokens_use["output_tokens"]
-                    print("\n\rtotal_tokens", total_tokens)
+                usage = message.get("usage")
+                input_tokens = usage.get("input_tokens", 0)
+                # output_tokens = usage.get("output_tokens", 0)
+                output_tokens = 0
+                total_tokens = total_tokens + input_tokens + output_tokens
+
+            usage = resp.get("usage")
+            if usage:
+                input_tokens = usage.get("input_tokens", 0)
+                output_tokens = usage.get("output_tokens", 0)
+                total_tokens = total_tokens + input_tokens + output_tokens
+
+                print("\n\rtotal_tokens", total_tokens)
+
             tool_use = resp.get("content_block")
             if tool_use and "tool_use" == tool_use['type']:
                 # print("tool_use", tool_use)
