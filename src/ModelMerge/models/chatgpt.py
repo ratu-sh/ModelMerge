@@ -347,6 +347,7 @@ class chatgpt(BaseLLM):
         total_tokens: int = 0,
         function_arguments: str = "",
         language: str = "English",
+        systemprompt: str = "You are ChatGPT, a large language model trained by OpenAI. Respond conversationally",
         **kwargs,
     ):
         """
@@ -354,7 +355,7 @@ class chatgpt(BaseLLM):
         """
         # Make conversation if it doesn't exist
         if convo_id not in self.conversation or pass_history <= 2:
-            self.reset(convo_id=convo_id, system_prompt=self.system_prompt[convo_id])
+            self.reset(convo_id=convo_id, system_prompt=systemprompt)
         self.add_to_conversation(prompt, role, convo_id=convo_id, function_name=function_name, total_tokens=total_tokens, function_arguments=function_arguments, pass_history=pass_history)
         json_post, message_token = self.truncate_conversation(prompt, role, convo_id, model, pass_history, **kwargs)
         # print(self.conversation[convo_id])
