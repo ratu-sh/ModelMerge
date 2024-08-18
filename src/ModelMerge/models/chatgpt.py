@@ -375,7 +375,7 @@ class chatgpt(BaseLLM):
         #             "role": mess["role"],
         #             "content": mess["content"][0]["text"]
         #         }
-        for _ in range(2):
+        for _ in range(3):
             replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', json.dumps(json_post)))
             print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
             response = None
@@ -399,7 +399,7 @@ class chatgpt(BaseLLM):
                     e = "You have entered an invalid API URL, please use the correct URL and use the `/start` command to set the API URL again. Specific error is as follows:\n\n" + str(e)
                     raise Exception(f"{e}")
             # print("response.text", response.text)
-            # print("response.status_code", response.status_code, response.status_code == 400, response and response.status_code == 400, response.text)
+            # print("response.status_code", response.status_code, response.status_code == 503, response != None and response.status_code == 503, response.text[:400])
             if response != None and (response.status_code == 400 or response.status_code == 422):
                 print("response.text", response.text)
                 if "function calling" in response.text:
@@ -428,8 +428,8 @@ class chatgpt(BaseLLM):
                     if "tool_choice" in json_post:
                         del json_post["tool_choice"]
                 continue
-            if response and response.status_code == 503:
-                print("response.text", response.text)
+            if response != None and response.status_code == 503:
+                # print("response.text", response.text)
                 if "Sorry, server is busy" in response.text:
                     for index, mess in enumerate(json_post["messages"]):
                         if type(mess["content"]) == list and "text" in mess["content"][0]:
@@ -438,7 +438,13 @@ class chatgpt(BaseLLM):
                                 "content": mess["content"][0]["text"]
                             }
                 continue
-            if response and response.status_code == 200:
+            if response != None and response.status_code == 200 and "is not possible because the prompts occupy" in response.text:
+                max_tokens = re.findall(r"only\s(\d+)\stokens", response.text)
+                # print("max_tokens", max_tokens)
+                if max_tokens:
+                    json_post["max_tokens"] = int(max_tokens[0])
+                    continue
+            if response != None and response.status_code == 200:
                 if response.text == "":
                     for index, mess in enumerate(json_post["messages"]):
                         if type(mess["content"]) == list and "text" in mess["content"][0]:
@@ -451,7 +457,7 @@ class chatgpt(BaseLLM):
                     break
         # print("response.status_code", response.status_code, response.text)
         if response != None and response.status_code != 200:
-            raise Exception(f"{response.status_code} {response.reason} {response.text}")
+            raise Exception(f"{response.status_code} {response.reason} {response.text[:400]}")
         if response is None:
             raise Exception(f"response is None, please check the connection or network.")
 
@@ -466,9 +472,7 @@ class chatgpt(BaseLLM):
                 continue
             # print(line.decode("utf-8"))
             if line.decode("utf-8").startswith('data:'):
-                line = line.decode("utf-8")[5:]
-                if line.startswith(" "):
-                    line = line[1:]
+                line = line.decode("utf-8").lstrip("data: ")
             else:
                 # print("line", line.decode("utf-8"))
                 if json.loads(line.decode("utf-8")).get("choices") \
@@ -483,6 +487,8 @@ class chatgpt(BaseLLM):
                 break
             resp: dict = json.loads(line)
             # print("resp", resp)
+            if "error" in resp:
+                raise Exception(f"{resp}")
             usage = resp.get("usage")
             if usage:
                 total_tokens = usage.get("total_tokens") or 0
