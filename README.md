@@ -2,7 +2,7 @@
 
 [中文](./README-zh.md)
 
-modelmerge is a powerful library designed to simplify and unify the use of various large language models, including GPT-4, GPT-3.5, Claude3, Claude2, Gemini1.5 Pro, DALL-E 3, and Groq. This library supports GPT-style function calls and comes with built-in Google search and URL summarization features, significantly enhancing the utility and flexibility of the models.
+modelmerge is a powerful library designed to simplify and unify the use of various large language models, including duckduckgo, GPT-4, GPT-3.5, Claude3, Claude2, Gemini1.5 Pro, DALL-E 3, and Groq. This library supports GPT-style function calls and comes with built-in Google search and URL summarization features, significantly enhancing the utility and flexibility of the models.
 
 ## Features
 
@@ -49,6 +49,7 @@ You can adjust different model parameters, including API keys and model selectio
 - Claude3
 - Claude2
 - Gemini1.5 Pro
+- DuckDuckGo(gpt-4o-mini, claude-3-haiku, Meta-Llama-3.1-70B, Mixtral-8x7B)
 - DALL-E 3
 - Groq
 
