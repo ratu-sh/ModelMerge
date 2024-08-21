@@ -19,6 +19,7 @@ __all__ = [
     'generate_image',
     'run_python_script',
     'get_tools_result',
+    'get_tools_result_async',
     'download_read_arxiv_pdf',
     'PLUGINS',
 ]

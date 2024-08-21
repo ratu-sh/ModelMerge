@@ -144,7 +144,7 @@ def check_json(json_data):
             elif "Unterminated string starting" in str(e):
                 json_data += '"}'
             elif "Expecting ',' delimiter" in str(e):
-                json_data += '}'
+                json_data =  {"prompt": json_data}
             elif "Expecting ':' delimiter" in str(e):
                 json_data = '{"prompt": ' + json.dumps(json_data) + '}'
             elif "Expecting value: line 1 column 1" in str(e):

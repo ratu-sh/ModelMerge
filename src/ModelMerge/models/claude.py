@@ -6,7 +6,7 @@ import tiktoken
 import requests
 
 from .base import BaseLLM
-from ..plugins import PLUGINS, get_tools_result
+from ..plugins import PLUGINS, get_tools_result, get_tools_result_async
 from ..utils.scripts import check_json
 from ..tools import claude_tools_list
 
@@ -26,10 +26,8 @@ class claude(BaseLLM):
         top_p: float = 0.7,
         timeout: float = 20,
         use_plugins: bool = True,
-        convo_id: str = "default",
     ):
         super().__init__(api_key, engine, api_url, system_prompt, timeout=timeout, temperature=temperature, top_p=top_p, use_plugins=use_plugins)
-        self.system_prompt[convo_id] = system_prompt
         # self.api_url = api_url
         self.conversation = claudeConversation()
 
@@ -65,7 +63,7 @@ class claude(BaseLLM):
         Reset the conversation
         """
         self.conversation[convo_id] = claudeConversation()
-        self.system_prompt[convo_id] = system_prompt or self.system_prompt[convo_id]
+        self.system_prompt = system_prompt or self.system_prompt
 
     def __truncate_conversation(self, convo_id: str = "default") -> None:
         """
@@ -171,7 +169,7 @@ class claude(BaseLLM):
 class claude3(BaseLLM):
     def __init__(
         self,
-        api_key: str,
+        api_key: str = None,
         engine: str = os.environ.get("GPT_ENGINE") or "claude-3-opus-20240229",
         api_url: str = (os.environ.get("CLAUDE_API_URL") or "https://api.anthropic.com/v1/messages"),
         system_prompt: str = "You are ChatGPT, a large language model trained by OpenAI. Respond conversationally",
@@ -179,10 +177,8 @@ class claude3(BaseLLM):
         timeout: float = 20,
         top_p: float = 0.7,
         use_plugins: bool = True,
-        convo_id: str = "default",
     ):
         super().__init__(api_key, engine, api_url, system_prompt, timeout=timeout, temperature=temperature, top_p=top_p, use_plugins=use_plugins)
-        self.system_prompt[convo_id] = system_prompt
         self.conversation: dict[str, list[dict]] = {
             "default": [],
         }
@@ -263,7 +259,7 @@ class claude3(BaseLLM):
         """
         self.conversation[convo_id] = list()
         self.plugins[convo_id] = copy.deepcopy(PLUGINS)
-        self.system_prompt[convo_id] = system_prompt or self.system_prompt[convo_id]
+        self.system_prompt = system_prompt or self.system_prompt
 
     def __truncate_conversation(self, convo_id: str = "default") -> None:
         """
@@ -298,7 +294,7 @@ class claude3(BaseLLM):
         num_tokens += 5  # every reply is primed with <im_start>assistant
         return num_tokens
 
-    async def ask_stream(
+    def ask_stream(
         self,
         prompt: str,
         role: str = "user",
@@ -311,6 +307,7 @@ class claude3(BaseLLM):
         function_name: str = "",
         function_full_response: str = "",
         language: str = "English",
+        system_prompt: str = None,
         **kwargs,
     ):
         self.add_to_conversation(prompt, role, convo_id=convo_id, tools_id=tools_id, total_tokens=total_tokens, function_name=function_name, function_full_response=function_full_response, pass_history=pass_history)
@@ -334,11 +331,165 @@ class claude3(BaseLLM):
             }],
             "temperature": kwargs.get("temperature", self.temperature),
             "top_p": kwargs.get("top_p", self.top_p),
-            "max_tokens": model_max_tokens,
+            "max_tokens": 8192 if "claude-3-5-sonnet" in now_model else model_max_tokens,
             "stream": True,
         }
-        if self.system_prompt[convo_id]:
-            json_post["system"] = self.system_prompt[convo_id]
+        json_post["system"] = system_prompt or self.system_prompt
+        if all(value == False for value in self.plugins[convo_id].values()) == False and self.use_plugins:
+            json_post.update(copy.deepcopy(claude_tools_list["base"]))
+            for item in self.plugins[convo_id].keys():
+                try:
+                    if self.plugins[convo_id][item]:
+                        json_post["tools"].append(claude_tools_list[item])
+                except:
+                    pass
+
+        replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', json.dumps(json_post)))
+        print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
+
+        try:
+            response = self.session.post(
+                url,
+                headers=headers,
+                json=json_post,
+                timeout=kwargs.get("timeout", self.timeout),
+                stream=True,
+            )
+        except ConnectionError:
+            print("连接错误，请检查服务器状态或网络连接。")
+            return
+        except requests.exceptions.ReadTimeout:
+            print("请求超时，请检查网络连接或增加超时时间。{e}")
+            return
+        except Exception as e:
+            print(f"发生了未预料的错误: {e}")
+            return
+
+        if response.status_code != 200:
+            print(response.text)
+            raise BaseException(f"{response.status_code} {response.reason} {response.text}")
+        response_role: str = "assistant"
+        full_response: str = ""
+        need_function_call: bool = False
+        function_call_name: str = ""
+        function_full_response: str = ""
+        total_tokens = 0
+        tools_id = ""
+        for line in response.iter_lines():
+            if not line or line.decode("utf-8")[:6] == "event:" or line.decode("utf-8") == "data: {}":
+                continue
+            # print(line.decode("utf-8"))
+            # if "tool_use" in line.decode("utf-8"):
+            #     tool_input = json.loads(line.decode("utf-8")["content"][1]["input"])
+            # else:
+            #     line = line.decode("utf-8")[6:]
+            line = line.decode("utf-8")[5:]
+            if line.startswith(" "):
+                line = line[1:]
+            # print(line)
+            resp: dict = json.loads(line)
+            if resp.get("error"):
+                print("error:", resp["error"])
+                raise BaseException(f"{resp['error']}")
+
+            message = resp.get("message")
+            if message:
+                usage = message.get("usage")
+                input_tokens = usage.get("input_tokens", 0)
+                # output_tokens = usage.get("output_tokens", 0)
+                output_tokens = 0
+                total_tokens = total_tokens + input_tokens + output_tokens
+
+            usage = resp.get("usage")
+            if usage:
+                input_tokens = usage.get("input_tokens", 0)
+                output_tokens = usage.get("output_tokens", 0)
+                total_tokens = total_tokens + input_tokens + output_tokens
+
+                # print("\n\rtotal_tokens", total_tokens)
+
+            tool_use = resp.get("content_block")
+            if tool_use and "tool_use" == tool_use['type']:
+                # print("tool_use", tool_use)
+                tools_id = tool_use["id"]
+                need_function_call = True
+                if "name" in tool_use:
+                    function_call_name = tool_use["name"]
+            delta = resp.get("delta")
+            # print("delta", delta)
+            if not delta:
+                continue
+            if "text" in delta:
+                content = delta["text"]
+                full_response += content
+                yield content
+            if "partial_json" in delta:
+                function_call_content = delta["partial_json"]
+                function_full_response += function_call_content
+        # print("function_full_response", function_full_response)
+        # print("function_call_name", function_call_name)
+        # print("need_function_call", need_function_call)
+        print("\n\rtotal_tokens", total_tokens)
+        if need_function_call:
+            function_full_response = check_json(function_full_response)
+            print("function_full_response", function_full_response)
+            function_response = ""
+            function_call_max_tokens = int(self.truncate_limit / 2)
+            function_response = yield from get_tools_result(function_call_name, function_full_response, function_call_max_tokens, self.engine, claude3, self.api_key, self.api_url, use_plugins=False, model=model, add_message=self.add_to_conversation, convo_id=convo_id, language=language)
+            response_role = "assistant"
+            if self.conversation[convo_id][-1]["role"] == "function" and self.conversation[convo_id][-1]["name"] == "get_search_results":
+                mess = self.conversation[convo_id].pop(-1)
+            yield from self.ask_stream(function_response, response_role, convo_id=convo_id, function_name=function_call_name, total_tokens=total_tokens, tools_id=tools_id, function_full_response=function_full_response, api_key=kwargs.get('api_key', self.api_key))
+        else:
+            if self.conversation[convo_id][-1]["role"] == "function" and self.conversation[convo_id][-1]["name"] == "get_search_results":
+                mess = self.conversation[convo_id].pop(-1)
+            self.add_to_conversation(full_response, response_role, convo_id=convo_id, total_tokens=total_tokens, pass_history=pass_history)
+            self.function_calls_counter = {}
+            if pass_history <= 2 and len(self.conversation[convo_id]) >= 2 and ("You are a translation engine" in self.conversation[convo_id][-2]["content"] or (type(self.conversation[convo_id][-2]["content"]) == list and "You are a translation engine" in self.conversation[convo_id][-2]["content"][0]["text"])):
+                self.conversation[convo_id].pop(-1)
+                self.conversation[convo_id].pop(-1)
+
+    async def ask_stream_async(
+        self,
+        prompt: str,
+        role: str = "user",
+        convo_id: str = "default",
+        model: str = None,
+        pass_history: int = 9999,
+        model_max_tokens: int = 4096,
+        tools_id: str = "",
+        total_tokens: int = 0,
+        function_name: str = "",
+        function_full_response: str = "",
+        language: str = "English",
+        system_prompt: str = None,
+        **kwargs,
+    ):
+        self.add_to_conversation(prompt, role, convo_id=convo_id, tools_id=tools_id, total_tokens=total_tokens, function_name=function_name, function_full_response=function_full_response, pass_history=pass_history)
+        # self.__truncate_conversation(convo_id=convo_id)
+        # print(self.conversation[convo_id])
+
+        url = self.api_url.source_api_url
+        now_model = model or self.engine
+        headers = {
+            "content-type": "application/json",
+            "x-api-key": f"{kwargs.get('api_key', self.api_key)}",
+            "anthropic-version": "2023-06-01",
+            "anthropic-beta": "max-tokens-3-5-sonnet-2024-07-15" if "claude-3-5-sonnet" in now_model else "tools-2024-05-16",
+        }
+
+        json_post = {
+            "model": now_model,
+            "messages": self.conversation[convo_id] if pass_history else [{
+                "role": "user",
+                "content": prompt
+            }],
+            "temperature": kwargs.get("temperature", self.temperature),
+            "top_p": kwargs.get("top_p", self.top_p),
+            "max_tokens": 8192 if "claude-3-5-sonnet" in now_model else model_max_tokens,
+            "stream": True,
+        }
+        json_post["system"] = system_prompt or self.system_prompt
         if all(value == False for value in self.plugins[convo_id].values()) == False and self.use_plugins:
             json_post.update(copy.deepcopy(claude_tools_list["base"]))
             for item in self.plugins[convo_id].keys():
@@ -438,7 +589,7 @@ class claude3(BaseLLM):
             print("function_full_response", function_full_response)
             function_response = ""
             function_call_max_tokens = int(self.truncate_limit / 2)
-            async for chunk in get_tools_result(function_call_name, function_full_response, function_call_max_tokens, self.engine, claude3, self.api_key, self.api_url, use_plugins=False, model=model, add_message=self.add_to_conversation, convo_id=convo_id, language=language):
+            async for chunk in get_tools_result_async(function_call_name, function_full_response, function_call_max_tokens, self.engine, claude3, kwargs.get('api_key', self.api_key), self.api_url, use_plugins=False, model=model, add_message=self.add_to_conversation, convo_id=convo_id, language=language):
                 if "function_response:" in chunk:
                     function_response = chunk.replace("function_response:", "")
                 else:
@@ -446,7 +597,7 @@ class claude3(BaseLLM):
             response_role = "assistant"
             if self.conversation[convo_id][-1]["role"] == "function" and self.conversation[convo_id][-1]["name"] == "get_search_results":
                 mess = self.conversation[convo_id].pop(-1)
-            async for chunk in self.ask_stream(function_response, response_role, convo_id=convo_id, function_name=function_call_name, total_tokens=total_tokens, tools_id=tools_id, function_full_response=function_full_response):
+            async for chunk in self.ask_stream_async(function_response, response_role, convo_id=convo_id, function_name=function_call_name, total_tokens=total_tokens, tools_id=tools_id, function_full_response=function_full_response, api_key=kwargs.get('api_key', self.api_key)):
                 yield chunk
             # yield from self.ask_stream(function_response, response_role, convo_id=convo_id, function_name=function_call_name, total_tokens=total_tokens, tools_id=tools_id, function_full_response=function_full_response)
         else:

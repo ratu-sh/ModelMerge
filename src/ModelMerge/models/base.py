@@ -32,7 +32,7 @@ class BaseAPI:
 class BaseLLM:
     def __init__(
         self,
-        api_key: str,
+        api_key: str = None,
         engine: str = os.environ.get("GPT_ENGINE") or "gpt-3.5-turbo",
         api_url: str = (os.environ.get("API_URL", None) or "https://api.openai.com/v1/chat/completions"),
         system_prompt: str = prompt.chatgpt_system_prompt,
@@ -50,7 +50,7 @@ class BaseLLM:
         self.api_key: str = api_key
         self.engine: str = engine
         self.api_url: str = BaseAPI(api_url or "https://api.openai.com/v1/chat/completions")
-        self.system_prompt: dict = defaultdict(lambda: system_prompt)
+        self.system_prompt: str = system_prompt
         self.max_tokens: int = max_tokens
         self.truncate_limit: int = truncate_limit
         self.temperature: float = temperature
@@ -203,6 +203,21 @@ class BaseLLM:
         """
         pass
 
+    async def ask_stream_async(
+        self,
+        prompt: list,
+        role: str = "user",
+        convo_id: str = "default",
+        model: str = None,
+        pass_history: int = 9999,
+        function_name: str = "",
+        **kwargs,
+    ):
+        """
+        Ask a question
+        """
+        pass
+
     async def ask_async(
         self,
         prompt: str,
@@ -215,9 +230,21 @@ class BaseLLM:
         """
         Non-streaming ask
         """
-        pass
+        response = ""
+        async for chunk in self.ask_stream_async(
+            prompt=prompt,
+            role=role,
+            convo_id=convo_id,
+            model=model,
+            pass_history=pass_history,
+            **kwargs,
+        ):
+            response += chunk
+        # full_response: str = "".join([r async for r in response])
+        full_response: str = "".join(response)
+        return full_response
 
-    async def ask(
+    def ask(
         self,
         prompt: str,
         role: str = "user",
@@ -229,24 +256,14 @@ class BaseLLM:
         """
         Non-streaming ask
         """
-        response = ""
-        async for chunk in self.ask_stream(
+        response = self.ask_stream(
             prompt=prompt,
             role=role,
             convo_id=convo_id,
             model=model,
             pass_history=pass_history,
             **kwargs,
-        ):
-            response += chunk
-        # response = await self.ask_stream(
-        #     prompt=prompt,
-        #     role=role,
-        #     convo_id=convo_id,
-        #     model=model,
-        #     pass_history=pass_history,
-        #     **kwargs,
-        # )
+        )
         full_response: str = "".join(response)
         return full_response
 
@@ -262,7 +279,7 @@ class BaseLLM:
         Reset the conversation
         """
         self.conversation[convo_id] = [
-            {"role": "system", "content": system_prompt or self.system_prompt[convo_id]},
+            {"role": "system", "content": system_prompt or self.system_prompt},
         ]
 
     def save(self, file: str, *keys: str) -> None:
