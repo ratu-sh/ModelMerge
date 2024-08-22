@@ -511,7 +511,7 @@ class chatgpt(BaseLLM):
                 function_call_content = delta["tool_calls"][0]["function"]
                 if "name" in function_call_content:
                     function_call_name = function_call_content["name"]
-                function_full_response += function_call_content["arguments"]
+                function_full_response += function_call_content.get("arguments", "")
                 if function_full_response.count("\\n") > 2 or "}" in function_full_response:
                     break
 
@@ -732,7 +732,9 @@ class chatgpt(BaseLLM):
                             function_call_content = delta["tool_calls"][0]["function"]
                             if "name" in function_call_content:
                                 function_call_name = function_call_content["name"]
-                            function_full_response += function_call_content["arguments"]
+                            if function_call_content.get("arguments") == None:
+                                print("error function_call_content:", delta)
+                            function_full_response += function_call_content.get("arguments", "")
                             if function_full_response.count("\\n") > 2 or "}" in function_full_response:
                                 break
 
