@@ -258,7 +258,6 @@ class claude3(BaseLLM):
         Reset the conversation
         """
         self.conversation[convo_id] = list()
-        self.plugins[convo_id] = copy.deepcopy(PLUGINS)
         self.system_prompt = system_prompt or self.system_prompt
 
     def __truncate_conversation(self, convo_id: str = "default") -> None:
@@ -335,11 +334,12 @@ class claude3(BaseLLM):
             "stream": True,
         }
         json_post["system"] = system_prompt or self.system_prompt
-        if all(value == False for value in self.plugins[convo_id].values()) == False and self.use_plugins:
+        plugins = kwargs.get("plugins", PLUGINS)
+        if all(value == False for value in plugins.values()) == False and self.use_plugins:
             json_post.update(copy.deepcopy(claude_tools_list["base"]))
-            for item in self.plugins[convo_id].keys():
+            for item in plugins.keys():
                 try:
-                    if self.plugins[convo_id][item]:
+                    if plugins[item]:
                         json_post["tools"].append(claude_tools_list[item])
                 except:
                     pass
@@ -490,11 +490,12 @@ class claude3(BaseLLM):
             "stream": True,
         }
         json_post["system"] = system_prompt or self.system_prompt
-        if all(value == False for value in self.plugins[convo_id].values()) == False and self.use_plugins:
+        plugins = kwargs.get("plugins", PLUGINS)
+        if all(value == False for value in plugins.values()) == False and self.use_plugins:
             json_post.update(copy.deepcopy(claude_tools_list["base"]))
-            for item in self.plugins[convo_id].keys():
+            for item in plugins.keys():
                 try:
-                    if self.plugins[convo_id][item]:
+                    if plugins[item]:
                         json_post["tools"].append(claude_tools_list[item])
                 except:
                     pass

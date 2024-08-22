@@ -198,7 +198,7 @@ class DuckChat:
                 if line.startswith('data: '):
                     yield line
 
-    async def ask_stream(self, query, convo_id, model, **kwargs):
+    async def ask_stream_async(self, query, convo_id, model, **kwargs):
         """Get answer from chat AI"""
         if not self.vqd:
             await self.get_vqd()

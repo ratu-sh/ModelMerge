@@ -122,10 +122,6 @@ class BaseLLM:
         self.function_calls_counter = {}
         self.function_call_max_loop = 10
         self.use_plugins = use_plugins
-        from ..plugins import PLUGINS
-        self.plugins: dict[str, list[dict]] = {
-            "default": PLUGINS,
-        }
 
     def add_to_conversation(
         self,
