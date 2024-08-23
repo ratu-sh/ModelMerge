@@ -738,7 +738,11 @@ class chatgpt(BaseLLM):
                             if function_full_response.count("\\n") > 2 or "}" in function_full_response:
                                 break
 
-                break
+                if full_response == "" and function_full_response == "":
+                    print("error: full_response or is empty", "full_response", full_response, "function_full_response", function_full_response)
+                    continue
+                else:
+                    break
             except Exception as e:
                 print(f"发生了未预料的错误：{e}")
                 import traceback
