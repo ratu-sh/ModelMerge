@@ -7,7 +7,6 @@ import time as record_time
 from itertools import islice
 from bs4 import BeautifulSoup
 from duckduckgo_search import DDGS
-from googleapiclient.discovery import build
 
 class ThreadWithReturnValue(threading.Thread):
     def run(self):
@@ -117,9 +116,16 @@ def getddgsearchurl(query, max_results=4):
 def getgooglesearchurl(result, numresults=3):
     urls = []
     try:
-        service = build("customsearch", "v1", developerKey=os.environ.get('GOOGLE_API_KEY', None))
-        res = service.cse().list(q=result, cx=os.environ.get('GOOGLE_CSE_ID', None)).execute()
-        link_list = [item['link'] for item in res['items']]
+        url = "https://www.googleapis.com/customsearch/v1"
+        params = {
+            'q': result,
+            'key': os.environ.get('GOOGLE_API_KEY', None),
+            'cx': os.environ.get('GOOGLE_CSE_ID', None)
+        }
+        response = requests.get(url, params=params)
+        # print(response.text)
+        results = response.json()
+        link_list = [item['link'] for item in results.get('items', [])]
         urls = link_list[:numresults]
     except Exception as e:
         print('\033[31m')
