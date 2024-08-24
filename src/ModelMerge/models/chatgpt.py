@@ -550,18 +550,18 @@ class chatgpt(BaseLLM):
                 if function_call_max_tokens <= 0:
                     function_call_max_tokens = int(self.truncate_limit / 2)
                 print("\033[32m function_call", function_call_name, "max token:", function_call_max_tokens, "\033[0m")
-                function_response = yield from get_tools_result(function_call_name, function_full_response, function_call_max_tokens, self.engine, chatgpt, kwargs.get('api_key', self.api_key), self.api_url, use_plugins=False, model=model, add_message=self.add_to_conversation, convo_id=convo_id, language=language)
+                function_response = yield from get_tools_result(function_call_name, function_full_response, function_call_max_tokens, model or self.engine, chatgpt, kwargs.get('api_key', self.api_key), self.api_url, use_plugins=False, model=model, add_message=self.add_to_conversation, convo_id=convo_id, language=language)
             else:
                 function_response = "无法找到相关信息，停止使用 tools"
             response_role = "tool"
             # print(self.conversation[convo_id][-1])
-            if self.conversation[convo_id][-1]["role"] == "tool" and self.conversation[convo_id][-1]["name"] == "get_search_results":
-                mess = self.conversation[convo_id].pop(-1)
+            # if self.conversation[convo_id][-1]["role"] == "tool" and self.conversation[convo_id][-1]["name"] == "get_search_results":
+            #     mess = self.conversation[convo_id].pop(-1)
                 # print("Truncate message:", mess)
             yield from self.ask_stream(function_response, response_role, convo_id=convo_id, function_name=function_call_name, total_tokens=total_tokens, model=model, function_arguments=function_full_response, function_call_id=function_call_id, api_key=kwargs.get('api_key', self.api_key), plugins=kwargs.get("plugins", PLUGINS))
         else:
-            if self.conversation[convo_id][-1]["role"] == "tool" and self.conversation[convo_id][-1]["name"] == "get_search_results":
-                mess = self.conversation[convo_id].pop(-1)
+            # if self.conversation[convo_id][-1]["role"] == "tool" and self.conversation[convo_id][-1]["name"] == "get_search_results":
+            #     mess = self.conversation[convo_id].pop(-1)
             self.add_to_conversation(full_response, response_role, convo_id=convo_id, total_tokens=total_tokens, pass_history=pass_history)
             self.function_calls_counter = {}
             if pass_history <= 2 and len(self.conversation[convo_id]) >= 2 \
@@ -711,7 +711,7 @@ class chatgpt(BaseLLM):
                         line = line.strip()
                         if not line or line.startswith(':'):
                             continue
-                        print(line)
+                        # print(line)
                         if line.startswith('data:'):
                             line = line.lstrip("data: ")
                         else:
@@ -791,7 +791,7 @@ class chatgpt(BaseLLM):
                 if function_call_max_tokens <= 0:
                     function_call_max_tokens = int(self.truncate_limit / 2)
                 print("\033[32m function_call", function_call_name, "max token:", function_call_max_tokens, "\033[0m")
-                async for chunk in get_tools_result_async(function_call_name, function_full_response, function_call_max_tokens, self.engine, chatgpt, kwargs.get('api_key', self.api_key), self.api_url, use_plugins=False, model=model, add_message=self.add_to_conversation, convo_id=convo_id, language=language):
+                async for chunk in get_tools_result_async(function_call_name, function_full_response, function_call_max_tokens, model or self.engine, chatgpt, kwargs.get('api_key', self.api_key), self.api_url, use_plugins=False, model=model, add_message=self.add_to_conversation, convo_id=convo_id, language=language):
                     if "function_response:" in chunk:
                         function_response = chunk.replace("function_response:", "")
                     else:
@@ -800,14 +800,14 @@ class chatgpt(BaseLLM):
                 function_response = "无法找到相关信息，停止使用 tools"
             response_role = "tool"
             # print(self.conversation[convo_id][-1])
-            if self.conversation[convo_id][-1]["role"] == "tool" and self.conversation[convo_id][-1]["name"] == "get_search_results":
-                mess = self.conversation[convo_id].pop(-1)
+            # if self.conversation[convo_id][-1]["role"] == "tool" and self.conversation[convo_id][-1]["name"] == "get_search_results":
+            #     mess = self.conversation[convo_id].pop(-1)
                 # print("Truncate message:", mess)
             async for chunk in self.ask_stream_async(function_response, response_role, convo_id=convo_id, function_name=function_call_name, total_tokens=total_tokens, model=model, function_arguments=function_full_response, function_call_id=function_call_id, api_key=kwargs.get('api_key', self.api_key), plugins=kwargs.get("plugins", PLUGINS)):
                 yield chunk
         else:
-            if self.conversation[convo_id][-1]["role"] == "tool" and self.conversation[convo_id][-1]["name"] == "get_search_results":
-                mess = self.conversation[convo_id].pop(-1)
+            # if self.conversation[convo_id][-1]["role"] == "tool" and self.conversation[convo_id][-1]["name"] == "get_search_results":
+            #     mess = self.conversation[convo_id].pop(-1)
             self.add_to_conversation(full_response, response_role, convo_id=convo_id, total_tokens=total_tokens, pass_history=pass_history)
             self.function_calls_counter = {}
             if pass_history <= 2 and len(self.conversation[convo_id]) >= 2 \

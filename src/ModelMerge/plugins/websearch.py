@@ -116,8 +116,6 @@ def getddgsearchurl(query, max_results=4):
 
 def getgooglesearchurl(result, numresults=3):
     urls = []
-    if os.environ.get('GOOGLE_API_KEY', None) == None and os.environ.get('GOOGLE_CSE_ID', None) == None:
-        return urls
     try:
         service = build("customsearch", "v1", developerKey=os.environ.get('GOOGLE_API_KEY', None))
         res = service.cse().list(q=result, cx=os.environ.get('GOOGLE_CSE_ID', None)).execute()
@@ -163,10 +161,11 @@ async def get_search_url(keywords, search_url_num):
     yield "🌐 message_search_stage_2"
 
     search_threads = []
-    search_thread = ThreadWithReturnValue(target=getgooglesearchurl, args=(keywords[0],search_url_num,))
-    search_thread.start()
-    search_threads.append(search_thread)
-    keywords.pop(0)
+    if os.environ.get('GOOGLE_API_KEY', None) and os.environ.get('GOOGLE_CSE_ID', None):
+        search_thread = ThreadWithReturnValue(target=getgooglesearchurl, args=(keywords[0],search_url_num,))
+        keywords.pop(0)
+        search_thread.start()
+        search_threads.append(search_thread)
 
     urls_set = []
     urls_set += getddgsearchurl(keywords[0], search_url_num)
