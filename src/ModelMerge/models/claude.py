@@ -383,9 +383,8 @@ class claude3(BaseLLM):
             #     tool_input = json.loads(line.decode("utf-8")["content"][1]["input"])
             # else:
             #     line = line.decode("utf-8")[6:]
-            line = line.decode("utf-8")[5:]
-            if line.startswith(" "):
-                line = line[1:]
+            line = line.decode("utf-8")
+            line = line.lstrip("data: ")
             # print(line)
             resp: dict = json.loads(line)
             if resp.get("error"):
@@ -426,6 +425,7 @@ class claude3(BaseLLM):
             if "partial_json" in delta:
                 function_call_content = delta["partial_json"]
                 function_full_response += function_call_content
+
         # print("function_full_response", function_full_response)
         # print("function_call_name", function_call_name)
         # print("need_function_call", need_function_call)

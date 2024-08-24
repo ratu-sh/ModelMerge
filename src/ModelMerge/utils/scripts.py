@@ -175,5 +175,13 @@ def claude_replace(text):
             text = replace_char(text, i, Punctuation_mapping[text[i]])
     return text
 
+def safe_get(data, *keys, default=None):
+    for key in keys:
+        try:
+            data = data[key] if isinstance(data, (dict, list)) else data.get(key)
+        except (KeyError, IndexError, AttributeError, TypeError):
+            return default
+    return data
+
 if __name__ == "__main__":
     os.system("clear")

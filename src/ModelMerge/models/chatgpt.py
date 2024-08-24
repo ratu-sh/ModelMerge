@@ -11,7 +11,7 @@ import requests
 import tiktoken
 
 from .base import BaseLLM
-from ..utils.scripts import check_json
+from ..utils.scripts import check_json, safe_get
 from ..tools import function_call_list
 from ..plugins import PLUGINS, get_tools_result, get_tools_result_async
 
@@ -215,13 +215,6 @@ class chatgpt(BaseLLM):
                 yield from self.extract_values(item)
         else:
             yield obj
-    # def clear_function_call(self, convo_id: str = "default"):
-    #     self.conversation[convo_id] = [item for item in self.conversation[convo_id] if '@Trash@' not in item['content']]
-    #     function_call_items = [item for item in self.conversation[convo_id] if 'function' in item['role']]
-    #     function_call_num = len(function_call_items)
-    #     if function_call_num > 50:
-    #         for i in range(function_call_num - 25):
-    #             self.conversation[convo_id].remove(function_call_items[i])
 
     # https://github.com/openai/openai-cookbook/blob/main/examples/How_to_count_tokens_with_tiktoken.ipynb
     def get_token_count(self, convo_id: str = "default") -> int:
@@ -341,13 +334,6 @@ class chatgpt(BaseLLM):
                 pass
 
         return json_post_body
-
-    def get_max_tokens(self, convo_id: str) -> int:
-        """
-        Get max tokens
-        """
-        # print("self.max_tokens, self.get_token_count(convo_id)", self.max_tokens, self.get_token_count(convo_id))
-        return self.max_tokens - self.get_token_count(convo_id)
 
     def ask_stream(
         self,
@@ -484,54 +470,40 @@ class chatgpt(BaseLLM):
         need_function_call: bool = False
         total_tokens = 0
         for line in response.iter_lines():
-            if not line or line.decode("utf-8").startswith(':'):
+            line = line.decode("utf-8")
+            if not line or line.startswith(':'):
                 continue
-            # print(line.decode("utf-8"))
-            if line.decode("utf-8").startswith('data:'):
-                line = line.decode("utf-8").lstrip("data: ")
+            # print(line)
+            if line.startswith('data:'):
+                line = line.lstrip("data: ")
+                if line == "[DONE]":
+                    break
             else:
-                # print("line", line.decode("utf-8"))
-                if json.loads(line.decode("utf-8")).get("choices") \
-                and json.loads(line.decode("utf-8"))["choices"][0].get("message") \
-                and json.loads(line.decode("utf-8"))["choices"][0]["message"].get("content"):
-                    full_response = json.loads(line.decode("utf-8"))["choices"][0]["message"]["content"]
+                line = json.loads(line)
+                if safe_get(line, "choices", 0, "message", "content"):
+                    full_response = line["choices"][0]["message"]["content"]
                     yield full_response
                 else:
-                    yield line.decode("utf-8")
-                break
-            if line == "[DONE]":
+                    yield line
                 break
             resp: dict = json.loads(line)
-            # print("resp", resp)
             if "error" in resp:
                 raise Exception(f"{resp}")
-            usage = resp.get("usage")
-            if usage:
-                total_tokens = usage.get("total_tokens") or 0
-                # print("\n\rtotal_tokens", total_tokens)
-            choices = resp.get("choices")
-            if not choices:
-                continue
-            delta = choices[0].get("delta")
+            total_tokens = total_tokens or safe_get(resp, "usage", "total_tokens", default=0)
+            delta = safe_get(resp, "choices", 0, "delta")
             if not delta:
                 continue
-            if "role" in delta and response_role == None:
-                response_role = delta["role"]
-            if "content" in delta and delta["content"]:
+            response_role = response_role or safe_get(delta, "role")
+            if safe_get(delta, "content"):
                 need_function_call = False
                 content = delta["content"]
                 full_response += content
                 yield content
-            if "tool_calls" in delta and delta["tool_calls"]:
+            if safe_get(delta, "tool_calls"):
                 need_function_call = True
-                function_call_content = delta["tool_calls"][0]["function"]
-                if delta["tool_calls"][0].get("id"):
-                    function_call_id = delta["tool_calls"][0]["id"]
-                if "name" in function_call_content:
-                    function_call_name = function_call_content["name"]
-                function_full_response += function_call_content.get("arguments", "")
-                if function_full_response.count("\\n") > 2 or "}" in function_full_response:
-                    break
+                function_call_name = function_call_name or safe_get(delta, "tool_calls", 0, "function", "name")
+                function_full_response += safe_get(delta, "tool_calls", 0, "function", "arguments", default="")
+                function_call_id = function_call_id or safe_get(delta, "tool_calls", 0, "id")
 
         print("\n\rtotal_tokens", total_tokens)
         if response_role == None:
@@ -567,21 +539,9 @@ class chatgpt(BaseLLM):
             if pass_history <= 2 and len(self.conversation[convo_id]) >= 2 \
             and (
                 "You are a translation engine" in self.conversation[convo_id][-2]["content"] \
-                or (
-                    type(self.conversation[convo_id][-2]["content"]) == list \
-                    and "You are a translation engine" in self.conversation[convo_id][-2]["content"][0]["text"]
-                )
-            ):
-                self.conversation[convo_id].pop(-1)
-                self.conversation[convo_id].pop(-1)
-
-            if pass_history <= 2 and len(self.conversation[convo_id]) >= 2 \
-            and (
-                "你是一位精通简体中文的专业翻译" in self.conversation[convo_id][-2]["content"] \
-                or (
-                    type(self.conversation[convo_id][-2]["content"]) == list \
-                    and "你是一位精通简体中文的专业翻译" in self.conversation[convo_id][-2]["content"][0]["text"]
-                )
+                or "You are a translation engine" in safe_get(self.conversation, convo_id, -2, "content", 0, "text") \
+                or "你是一位精通简体中文的专业翻译" in self.conversation[convo_id][-2]["content"] \
+                or "你是一位精通简体中文的专业翻译" in safe_get(self.conversation, convo_id, -2, "content", 0, "text")
             ):
                 self.conversation[convo_id].pop(-1)
                 self.conversation[convo_id].pop(-1)
@@ -659,7 +619,7 @@ class chatgpt(BaseLLM):
                                     del json_post["tool_choice"]
                             elif "invalid_request_error" in response.text:
                                 for index, mess in enumerate(json_post["messages"]):
-                                    if type(mess["content"]) == list and "text" in mess["content"][0]:
+                                    if safe_get(mess, "content", 0) == "text":
                                         json_post["messages"][index] = {
                                             "role": mess["role"],
                                             "content": mess["content"][0]["text"]
@@ -714,51 +674,33 @@ class chatgpt(BaseLLM):
                         # print(line)
                         if line.startswith('data:'):
                             line = line.lstrip("data: ")
+                            if line == "[DONE]":
+                                break
                         else:
-                            # print("line", line)
-                            if json.loads(line).get("choices") \
-                            and json.loads(line)["choices"][0].get("message") \
-                            and json.loads(line)["choices"][0]["message"].get("content"):
-                                full_response = json.loads(line)["choices"][0]["message"]["content"]
+                            line = json.loads(line)
+                            if safe_get(line, "choices", 0, "message", "content"):
                                 yield full_response
                             else:
                                 yield line
                             break
-                        if line == "[DONE]":
-                            break
                         resp: dict = json.loads(line)
-                        # print("resp", resp)
                         if "error" in resp:
                             raise Exception(f"{resp}")
-                        usage = resp.get("usage")
-                        if usage:
-                            total_tokens = usage.get("total_tokens") or 0
-                            # print("\n\rtotal_tokens", total_tokens)
-                        choices = resp.get("choices")
-                        if not choices:
-                            continue
-                        delta = choices[0].get("delta")
+                        total_tokens = total_tokens or safe_get(resp, "usage", "total_tokens", default=0)
+                        delta = safe_get(resp, "choices", 0, "delta")
                         if not delta:
                             continue
-                        if "role" in delta and response_role == None:
-                            response_role = delta["role"]
-                        if "content" in delta and delta["content"]:
+                        response_role = response_role or safe_get(delta, "role")
+                        if safe_get(delta, "content"):
                             need_function_call = False
                             content = delta["content"]
                             full_response += content
                             yield content
-                        if "tool_calls" in delta and delta["tool_calls"]:
+                        if safe_get(delta, "tool_calls"):
                             need_function_call = True
-                            function_call_content = delta["tool_calls"][0]["function"]
-                            if delta["tool_calls"][0].get("id"):
-                                function_call_id = delta["tool_calls"][0]["id"]
-                            if "name" in function_call_content:
-                                function_call_name = function_call_content["name"]
-                            if function_call_content.get("arguments") == None:
-                                print("error function_call_content:", delta)
-                            function_full_response += function_call_content.get("arguments", "")
-                            if function_full_response.count("\\n") > 2 or "}" in function_full_response:
-                                break
+                            function_call_name = function_call_name or safe_get(delta, "tool_calls", 0, "function", "name")
+                            function_full_response += safe_get(delta, "tool_calls", 0, "function", "arguments", default="")
+                            function_call_id = function_call_id or safe_get(delta, "tool_calls", 0, "id")
 
                 if full_response == "" and function_full_response == "":
                     print("error: full_response or is empty", "full_response", full_response, "function_full_response", function_full_response)
@@ -813,106 +755,12 @@ class chatgpt(BaseLLM):
             if pass_history <= 2 and len(self.conversation[convo_id]) >= 2 \
             and (
                 "You are a translation engine" in self.conversation[convo_id][-2]["content"] \
-                or (
-                    type(self.conversation[convo_id][-2]["content"]) == list \
-                    and "You are a translation engine" in self.conversation[convo_id][-2]["content"][0]["text"]
-                )
+                or "You are a translation engine" in safe_get(self.conversation, convo_id, -2, "content", 0, "text") \
+                or "你是一位精通简体中文的专业翻译" in self.conversation[convo_id][-2]["content"] \
+                or "你是一位精通简体中文的专业翻译" in safe_get(self.conversation, convo_id, -2, "content", 0, "text")
             ):
                 self.conversation[convo_id].pop(-1)
                 self.conversation[convo_id].pop(-1)
-
-            if pass_history <= 2 and len(self.conversation[convo_id]) >= 2 \
-            and (
-                "你是一位精通简体中文的专业翻译" in self.conversation[convo_id][-2]["content"] \
-                or (
-                    type(self.conversation[convo_id][-2]["content"]) == list \
-                    and "你是一位精通简体中文的专业翻译" in self.conversation[convo_id][-2]["content"][0]["text"]
-                )
-            ):
-                self.conversation[convo_id].pop(-1)
-                self.conversation[convo_id].pop(-1)
-
-    # async def ask_stream_async(
-    #     self,
-    #     prompt: str,
-    #     role: str = "user",
-    #     convo_id: str = "default",
-    #     model: str = None,
-    #     pass_history: int = 9999,
-    #     **kwargs,
-    # ) -> AsyncGenerator[str, None]:
-    #     """
-    #     Ask a question
-    #     """
-    #     # Make conversation if it doesn't exist
-    #     if convo_id not in self.conversation or pass_history <= 2:
-    #         self.reset(convo_id=convo_id, system_prompt=self.system_prompt[convo_id])
-    #     self.add_to_conversation(prompt, "user", convo_id=convo_id, pass_history=pass_history)
-    #     self.__truncate_conversation(convo_id=convo_id)
-    #     if self.engine == "gpt-4-1106-preview" or "gpt-4-0125-preview" in self.engine or "gpt-4-turbo" in self.engine:
-    #         model_max_tokens = kwargs.get("max_tokens", self.max_tokens)
-    #     else:
-    #         model_max_tokens = min(self.get_max_tokens(convo_id=convo_id) - 500, kwargs.get("max_tokens", self.max_tokens))
-    #     # Get response
-    #     async with self.aclient.stream(
-    #         "post",
-    #         self.api_url.chat_url,
-    #         headers={"Authorization": f"Bearer {kwargs.get('api_key', self.api_key)}"},
-    #         json={
-    #             "model": model or self.engine,
-    #             "messages": self.conversation[convo_id] if pass_history else [{"role": "system","content": self.system_prompt[convo_id]},{"role": role, "content": prompt}],
-    #             "stream": True,
-    #             # kwargs
-    #             "temperature": kwargs.get("temperature", self.temperature),
-    #             "top_p": kwargs.get("top_p", self.top_p),
-    #             "presence_penalty": kwargs.get(
-    #                 "presence_penalty",
-    #                 self.presence_penalty,
-    #             ),
-    #             "frequency_penalty": kwargs.get(
-    #                 "frequency_penalty",
-    #                 self.frequency_penalty,
-    #             ),
-    #             "n": kwargs.get("n", self.reply_count),
-    #             "user": role,
-    #             "max_tokens": model_max_tokens,
-    #             # "max_tokens": min(
-    #             #     self.get_max_tokens(convo_id=convo_id),
-    #             #     kwargs.get("max_tokens", self.max_tokens),
-    #             # ),
-    #         },
-    #         timeout=kwargs.get("timeout", self.timeout),
-    #     ) as response:
-    #         if response.status_code != 200:
-    #             await response.aread()
-    #             raise Exception(f"{response.status_code} {response.reason_phrase} {response.text}")
-    #         response_role: str = ""
-    #         full_response: str = ""
-    #         async for line in response.aiter_lines():
-    #             line = line.strip()
-    #             if not line:
-    #                 continue
-    #             # Remove "data: "
-    #             line = line[6:]
-    #             if line == "[DONE]":
-    #                 break
-    #             resp: dict = json.loads(line)
-    #             if "error" in resp:
-    #                 raise Exception(f"{resp['error']}")
-    #             choices = resp.get("choices")
-    #             if not choices:
-    #                 continue
-    #             delta: dict[str, str] = choices[0].get("delta")
-    #             if not delta:
-    #                 continue
-    #             if "role" in delta:
-    #                 response_role = delta["role"]
-    #             if "content" in delta:
-    #                 content: str = delta["content"]
-    #                 full_response += content
-    #                 yield content
-    #     self.add_to_conversation(full_response, response_role, convo_id=convo_id, pass_history=pass_history)
-    #     print("total tokens:", self.get_token_count(convo_id))
 
     async def ask_async(
         self,
