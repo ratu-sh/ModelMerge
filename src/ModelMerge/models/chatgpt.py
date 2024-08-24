@@ -4,7 +4,7 @@ import json
 import copy
 from typing import Union
 from pathlib import Path
-from typing import AsyncGenerator, Set
+from typing import Set
 
 import httpx
 import requests
@@ -85,6 +85,7 @@ class chatgpt(BaseLLM):
         total_tokens: int = 0,
         function_arguments: str = "",
         pass_history: int = 9999,
+        function_call_id: str = "",
     ) -> None:
         """
         Add a message to the conversation
@@ -95,7 +96,20 @@ class chatgpt(BaseLLM):
         if function_name == "" and message and message != None:
             self.conversation[convo_id].append({"role": role, "content": message})
         elif function_name != "" and message and message != None:
-            self.conversation[convo_id].append({"role": role, "name": function_name, "arguments": function_arguments, "content": message})
+            self.conversation[convo_id].append({
+                "role": "assistant",
+                "tool_calls": [
+                    {
+                        "id": function_call_id,
+                        "type": "function",
+                        "function": {
+                            "name": function_name,
+                            "arguments": function_arguments,
+                        },
+                    }
+                ],
+                })
+            self.conversation[convo_id].append({"role": role, "tool_call_id": function_call_id, "content": message})
         else:
             print('\033[31m')
             print("error: add_to_conversation message is None or empty")
@@ -345,6 +359,7 @@ class chatgpt(BaseLLM):
         function_name: str = "",
         total_tokens: int = 0,
         function_arguments: str = "",
+        function_call_id: str = "",
         language: str = "English",
         system_prompt: str = None,
         **kwargs,
@@ -356,7 +371,7 @@ class chatgpt(BaseLLM):
         self.system_prompt = system_prompt or self.system_prompt
         if convo_id not in self.conversation or pass_history <= 2:
             self.reset(convo_id=convo_id, system_prompt=system_prompt)
-        self.add_to_conversation(prompt, role, convo_id=convo_id, function_name=function_name, total_tokens=total_tokens, function_arguments=function_arguments, pass_history=pass_history)
+        self.add_to_conversation(prompt, role, convo_id=convo_id, function_name=function_name, total_tokens=total_tokens, function_arguments=function_arguments, function_call_id=function_call_id, pass_history=pass_history)
         json_post, message_token = self.truncate_conversation(prompt, role, convo_id, model, pass_history, **kwargs)
         # print(self.conversation[convo_id])
         model_max_tokens = kwargs.get("max_tokens", self.max_tokens)
@@ -415,7 +430,7 @@ class chatgpt(BaseLLM):
                                 "content": mess["content"][0]["text"]
                             }
                 elif "'function' is not an allowed role" in response.text:
-                    if json_post["messages"][-1]["role"] == "function":
+                    if json_post["messages"][-1]["role"] == "tool":
                         mess = json_post["messages"][-1]
                         json_post["messages"][-1] = {
                             "role": "assistant",
@@ -465,6 +480,7 @@ class chatgpt(BaseLLM):
         full_response: str = ""
         function_full_response: str = ""
         function_call_name: str = ""
+        function_call_id: str = ""
         need_function_call: bool = False
         total_tokens = 0
         for line in response.iter_lines():
@@ -509,6 +525,8 @@ class chatgpt(BaseLLM):
             if "tool_calls" in delta and delta["tool_calls"]:
                 need_function_call = True
                 function_call_content = delta["tool_calls"][0]["function"]
+                if delta["tool_calls"][0].get("id"):
+                    function_call_id = delta["tool_calls"][0]["id"]
                 if "name" in function_call_content:
                     function_call_name = function_call_content["name"]
                 function_full_response += function_call_content.get("arguments", "")
@@ -535,14 +553,14 @@ class chatgpt(BaseLLM):
                 function_response = yield from get_tools_result(function_call_name, function_full_response, function_call_max_tokens, self.engine, chatgpt, kwargs.get('api_key', self.api_key), self.api_url, use_plugins=False, model=model, add_message=self.add_to_conversation, convo_id=convo_id, language=language)
             else:
                 function_response = "无法找到相关信息，停止使用 tools"
-            response_role = "function"
+            response_role = "tool"
             # print(self.conversation[convo_id][-1])
-            if self.conversation[convo_id][-1]["role"] == "function" and self.conversation[convo_id][-1]["name"] == "get_search_results":
+            if self.conversation[convo_id][-1]["role"] == "tool" and self.conversation[convo_id][-1]["name"] == "get_search_results":
                 mess = self.conversation[convo_id].pop(-1)
                 # print("Truncate message:", mess)
-            yield from self.ask_stream(function_response, response_role, convo_id=convo_id, function_name=function_call_name, total_tokens=total_tokens, model=model, function_arguments=function_full_response, api_key=kwargs.get('api_key', self.api_key), plugins=kwargs.get("plugins", PLUGINS))
+            yield from self.ask_stream(function_response, response_role, convo_id=convo_id, function_name=function_call_name, total_tokens=total_tokens, model=model, function_arguments=function_full_response, function_call_id=function_call_id, api_key=kwargs.get('api_key', self.api_key), plugins=kwargs.get("plugins", PLUGINS))
         else:
-            if self.conversation[convo_id][-1]["role"] == "function" and self.conversation[convo_id][-1]["name"] == "get_search_results":
+            if self.conversation[convo_id][-1]["role"] == "tool" and self.conversation[convo_id][-1]["name"] == "get_search_results":
                 mess = self.conversation[convo_id].pop(-1)
             self.add_to_conversation(full_response, response_role, convo_id=convo_id, total_tokens=total_tokens, pass_history=pass_history)
             self.function_calls_counter = {}
@@ -578,6 +596,7 @@ class chatgpt(BaseLLM):
         function_name: str = "",
         total_tokens: int = 0,
         function_arguments: str = "",
+        function_call_id: str = "",
         language: str = "English",
         system_prompt: str = "You are ChatGPT, a large language model trained by OpenAI. Respond conversationally",
         **kwargs,
@@ -589,7 +608,7 @@ class chatgpt(BaseLLM):
         self.system_prompt = system_prompt or self.system_prompt
         if convo_id not in self.conversation or pass_history <= 2:
             self.reset(convo_id=convo_id, system_prompt=system_prompt)
-        self.add_to_conversation(prompt, role, convo_id=convo_id, function_name=function_name, total_tokens=total_tokens, function_arguments=function_arguments, pass_history=pass_history)
+        self.add_to_conversation(prompt, role, convo_id=convo_id, function_name=function_name, total_tokens=total_tokens, function_arguments=function_arguments, pass_history=pass_history, function_call_id=function_call_id)
         json_post, message_token = self.truncate_conversation(prompt, role, convo_id, model, pass_history, **kwargs)
         # print(self.conversation[convo_id])
         model_max_tokens = kwargs.get("max_tokens", self.max_tokens)
@@ -612,6 +631,7 @@ class chatgpt(BaseLLM):
         full_response: str = ""
         function_full_response: str = ""
         function_call_name: str = ""
+        function_call_id: str = ""
         need_function_call: bool = False
         total_tokens = 0
 
@@ -645,7 +665,7 @@ class chatgpt(BaseLLM):
                                             "content": mess["content"][0]["text"]
                                         }
                             elif "'function' is not an allowed role" in response.text:
-                                if json_post["messages"][-1]["role"] == "function":
+                                if json_post["messages"][-1]["role"] == "tool":
                                     mess = json_post["messages"][-1]
                                     json_post["messages"][-1] = {
                                         "role": "assistant",
@@ -691,7 +711,7 @@ class chatgpt(BaseLLM):
                         line = line.strip()
                         if not line or line.startswith(':'):
                             continue
-                        # print(line)
+                        print(line)
                         if line.startswith('data:'):
                             line = line.lstrip("data: ")
                         else:
@@ -730,6 +750,8 @@ class chatgpt(BaseLLM):
                         if "tool_calls" in delta and delta["tool_calls"]:
                             need_function_call = True
                             function_call_content = delta["tool_calls"][0]["function"]
+                            if delta["tool_calls"][0].get("id"):
+                                function_call_id = delta["tool_calls"][0]["id"]
                             if "name" in function_call_content:
                                 function_call_name = function_call_content["name"]
                             if function_call_content.get("arguments") == None:
@@ -776,15 +798,15 @@ class chatgpt(BaseLLM):
                         yield chunk
             else:
                 function_response = "无法找到相关信息，停止使用 tools"
-            response_role = "function"
+            response_role = "tool"
             # print(self.conversation[convo_id][-1])
-            if self.conversation[convo_id][-1]["role"] == "function" and self.conversation[convo_id][-1]["name"] == "get_search_results":
+            if self.conversation[convo_id][-1]["role"] == "tool" and self.conversation[convo_id][-1]["name"] == "get_search_results":
                 mess = self.conversation[convo_id].pop(-1)
                 # print("Truncate message:", mess)
-            async for chunk in self.ask_stream_async(function_response, response_role, convo_id=convo_id, function_name=function_call_name, total_tokens=total_tokens, model=model, function_arguments=function_full_response, api_key=kwargs.get('api_key', self.api_key), plugins=kwargs.get("plugins", PLUGINS)):
+            async for chunk in self.ask_stream_async(function_response, response_role, convo_id=convo_id, function_name=function_call_name, total_tokens=total_tokens, model=model, function_arguments=function_full_response, function_call_id=function_call_id, api_key=kwargs.get('api_key', self.api_key), plugins=kwargs.get("plugins", PLUGINS)):
                 yield chunk
         else:
-            if self.conversation[convo_id][-1]["role"] == "function" and self.conversation[convo_id][-1]["name"] == "get_search_results":
+            if self.conversation[convo_id][-1]["role"] == "tool" and self.conversation[convo_id][-1]["name"] == "get_search_results":
                 mess = self.conversation[convo_id].pop(-1)
             self.add_to_conversation(full_response, response_role, convo_id=convo_id, total_tokens=total_tokens, pass_history=pass_history)
             self.function_calls_counter = {}

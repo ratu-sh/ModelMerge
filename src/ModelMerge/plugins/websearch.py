@@ -35,7 +35,10 @@ def Web_crawler(url: str, isSearch=False) -> str:
         if content_length > 5000000:
             print("Skipping large file:", url)
             return result
-        soup = BeautifulSoup(response.text.encode(response.encoding), 'lxml', from_encoding='utf-8')
+        try:
+            soup = BeautifulSoup(response.text.encode(response.encoding), 'xml', from_encoding='utf-8')
+        except:
+            soup = BeautifulSoup(response.text.encode(response.encoding), 'html.parser', from_encoding='utf-8')
         # print("soup", soup)
 
         table_contents = ""
