@@ -8,7 +8,7 @@ from ..utils.prompt import search_key_word_prompt, arxiv_doc_assistant_prompt, a
 PLUGINS = {
     "SEARCH" : (os.environ.get('SEARCH', "True") == "False") == False,
     "URL"    : (os.environ.get('URL', "True") == "False") == False,
-    "ARXIV"  : (os.environ.get('ARXIV', "True") == "False") == False,
+    "ARXIV"  : (os.environ.get('ARXIV', "False") == "False") == False,
     "CODE"   : (os.environ.get('CODE', "False") == "False") == False,
     "IMAGE"  : (os.environ.get('IMAGE', "False") == "False") == False,
     "DATE"   : (os.environ.get('DATE', "False") == "False") == False,
