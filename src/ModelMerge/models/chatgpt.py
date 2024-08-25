@@ -539,9 +539,9 @@ class chatgpt(BaseLLM):
             if pass_history <= 2 and len(self.conversation[convo_id]) >= 2 \
             and (
                 "You are a translation engine" in self.conversation[convo_id][-2]["content"] \
-                or "You are a translation engine" in safe_get(self.conversation, convo_id, -2, "content", 0, "text") \
+                or "You are a translation engine" in safe_get(self.conversation, convo_id, -2, "content", 0, "text", default="") \
                 or "你是一位精通简体中文的专业翻译" in self.conversation[convo_id][-2]["content"] \
-                or "你是一位精通简体中文的专业翻译" in safe_get(self.conversation, convo_id, -2, "content", 0, "text")
+                or "你是一位精通简体中文的专业翻译" in safe_get(self.conversation, convo_id, -2, "content", 0, "text", default="")
             ):
                 self.conversation[convo_id].pop(-1)
                 self.conversation[convo_id].pop(-1)
@@ -755,9 +755,9 @@ class chatgpt(BaseLLM):
             if pass_history <= 2 and len(self.conversation[convo_id]) >= 2 \
             and (
                 "You are a translation engine" in self.conversation[convo_id][-2]["content"] \
-                or "You are a translation engine" in safe_get(self.conversation, convo_id, -2, "content", 0, "text") \
+                or "You are a translation engine" in safe_get(self.conversation, convo_id, -2, "content", 0, "text", default="") \
                 or "你是一位精通简体中文的专业翻译" in self.conversation[convo_id][-2]["content"] \
-                or "你是一位精通简体中文的专业翻译" in safe_get(self.conversation, convo_id, -2, "content", 0, "text")
+                or "你是一位精通简体中文的专业翻译" in safe_get(self.conversation, convo_id, -2, "content", 0, "text", default="")
             ):
                 self.conversation[convo_id].pop(-1)
                 self.conversation[convo_id].pop(-1)
