@@ -121,7 +121,7 @@ class chatgpt(BaseLLM):
         # print(json.dumps(self.conversation[convo_id], indent=4, ensure_ascii=False))
         while message_index < conversation_len:
             if self.conversation[convo_id][message_index]["role"] == self.conversation[convo_id][message_index + 1]["role"]:
-                if self.conversation[convo_id][message_index].get("content"):
+                if self.conversation[convo_id][message_index].get("content") and self.conversation[convo_id][message_index + 1].get("content"):
                     if type(self.conversation[convo_id][message_index + 1]["content"]) == str \
                     and type(self.conversation[convo_id][message_index]["content"]) == list:
                         self.conversation[convo_id][message_index + 1]["content"] = [{"type": "text", "text": self.conversation[convo_id][message_index + 1]["content"]}]

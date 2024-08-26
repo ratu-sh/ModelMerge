@@ -80,7 +80,7 @@ async def get_tools_result_async(function_call_name, function_full_response, fun
         function_response, text_len = cut_message(function_response, function_call_max_tokens, engine)
     if function_call_name == "download_read_arxiv_pdf":
         add_message(arxiv_doc_user_prompt, "user", convo_id=convo_id)
-        add_message(arxiv_doc_assistant_prompt, "assistant", convo_id=convo_id)
+        # add_message(arxiv_doc_assistant_prompt, "assistant", convo_id=convo_id)
         prompt = json.loads(function_full_response)["prompt"]
         function_response = eval(function_call_name)(prompt)
         function_response, text_len = cut_message(function_response, function_call_max_tokens, engine)
@@ -158,7 +158,7 @@ def get_tools_result(function_call_name, function_full_response, function_call_m
         function_response, text_len = cut_message(function_response, function_call_max_tokens, engine)
     if function_call_name == "download_read_arxiv_pdf":
         add_message(arxiv_doc_user_prompt, "user", convo_id=convo_id)
-        add_message(arxiv_doc_assistant_prompt, "assistant", convo_id=convo_id)
+        # add_message(arxiv_doc_assistant_prompt, "assistant", convo_id=convo_id)
         prompt = json.loads(function_full_response)["prompt"]
         function_response = eval(function_call_name)(prompt)
         function_response, text_len = cut_message(function_response, function_call_max_tokens, engine)
