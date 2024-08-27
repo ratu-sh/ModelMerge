@@ -49,7 +49,8 @@ async def get_tools_result_async(function_call_name, function_full_response, fun
         url = json.loads(function_full_response)["url"]
         print("\n\nurl", url)
         # function_response = jina_ai_Web_crawler(url)
-        function_response = Web_crawler(url)
+        # function_response = Web_crawler(url)
+        function_response = compare_and_choose_content(url)
         function_response, text_len = cut_message(function_response, function_call_max_tokens, engine)
     if function_call_name == "get_city_tarvel_info":
         city = json.loads(function_full_response)["city"]
@@ -127,7 +128,8 @@ def get_tools_result(function_call_name, function_full_response, function_call_m
         url = json.loads(function_full_response)["url"]
         print("\n\nurl", url)
         # function_response = jina_ai_Web_crawler(url)
-        function_response = Web_crawler(url)
+        # function_response = Web_crawler(url)
+        function_response = compare_and_choose_content(url)
         function_response, text_len = cut_message(function_response, function_call_max_tokens, engine)
     if function_call_name == "get_city_tarvel_info":
         city = json.loads(function_full_response)["city"]

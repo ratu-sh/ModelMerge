@@ -17,51 +17,53 @@ class ThreadWithReturnValue(threading.Thread):
         super().join()
         return self._return
 
-def Web_crawler(url: str, isSearch=False) -> str:
-    """返回链接网址url正文内容，必须是合法的网址"""
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
-    }
-    result = ''
-    try:
-        requests.packages.urllib3.disable_warnings()
-        response = requests.get(url, headers=headers, verify=False, timeout=3, stream=True)
-        if response.status_code == 404:
-            print("Page not found:", url)
-            return ""
-            # return "抱歉，网页不存在，目前无法访问该网页。@Trash@"
-        content_length = int(response.headers.get('Content-Length', 0))
-        if content_length > 5000000:
-            print("Skipping large file:", url)
-            return result
-        try:
-            soup = BeautifulSoup(response.text.encode(response.encoding), 'xml', from_encoding='utf-8')
-        except:
-            soup = BeautifulSoup(response.text.encode(response.encoding), 'html.parser', from_encoding='utf-8')
-        # print("soup", soup)
+import re
+import httpx
+import lxml.html
+from lxml.html.clean import Cleaner
+from html2text import HTML2Text
+from textwrap import dedent
 
-        table_contents = ""
-        tables = soup.find_all('table')
-        for table in tables:
-            table_contents += table.get_text()
-            table.decompose()
-        body = "".join(soup.find('body').get_text().split('\n'))
-        result = table_contents + body
-        if result == '' and not isSearch:
-            result = ""
-            # result = "抱歉，可能反爬虫策略，目前无法访问该网页。@Trash@"
-        if result.count("\"") > 1000:
-            result = ""
-    except Exception as e:
-        print('\033[31m')
-        print("error url", url)
-        print("error", e)
-        print('\033[0m')
-        result = "抱歉，目前无法访问该网页。"
-    # print("url content", result + "\n\n")
-    return result
+def url_to_markdown(url):
+    # 获取并清理网页内容
+    def get_body(url):
+        try:
+            text = httpx.get(url, verify=False, timeout=5).text
+            if text == "":
+                return "抱歉，目前无法访问该网页。"
+            body = lxml.html.fromstring(text).xpath('//body')[0]
+            body = Cleaner(javascript=True, style=True).clean_html(body)
+            return ''.join(lxml.html.tostring(c, encoding='unicode') for c in body)
+        except Exception as e:
+            print('\033[31m')
+            print("error: url_to_markdown url", url)
+            print("error", e)
+            print('\033[0m')
+            return "抱歉，目前无法访问该网页。"
+
+    # 将HTML转换为Markdown
+    def get_md(cts):
+        h2t = HTML2Text(bodywidth=5000)
+        h2t.ignore_links = True
+        h2t.mark_code = True
+        h2t.ignore_images = True
+        res = h2t.handle(cts)
+
+        def _f(m):
+            return f'```\n{dedent(m.group(1))}\n```'
+
+        return re.sub(r'\[code]\s*\n(.*?)\n\[/code]', _f, res or '', flags=re.DOTALL).strip()
+
+    # 获取网页内容
+    body_content = get_body(url)
+
+    # 转换为Markdown
+    markdown_content = get_md(body_content)
+
+    return markdown_content
 
 def jina_ai_Web_crawler(url: str, isSearch=False) -> str:
+    """返回链接网址url正文内容，必须是合法的网址"""
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
     }
@@ -92,11 +94,63 @@ def jina_ai_Web_crawler(url: str, isSearch=False) -> str:
             result = ""
     except Exception as e:
         print('\033[31m')
-        print("error url", url)
+        print("error: jina_ai_Web_crawler url", url)
         print("error", e)
         print('\033[0m')
     # print(result + "\n\n")
     return result
+
+def compare_and_choose_content(url: str) -> str:
+    """
+    比较 url_to_markdown 和 jina_ai_Web_crawler 的结果，选择更好的内容
+
+    :param url: 要爬取的网页URL
+    :return: 选择的更好的内容
+    """
+    markdown_content = url_to_markdown(url)
+    # print(markdown_content)
+    print('-----------------------------')
+    jina_content = jina_ai_Web_crawler(url)
+    print('-----------------------------')
+
+    # 定义评分函数
+    def score_content(content):
+        # 1. 内容长度
+        length_score = len(content)
+
+        # 2. 是否包含错误信息
+        error_penalty = 1000 if "抱歉" in content or "@Trash@" in content else 0
+
+        # 3. 内容的多样性（可以通过不同类型的字符来粗略估计）
+        diversity_score = len(set(content))
+
+        # 4. 特殊字符比例（过高可能意味着格式问题）
+        special_char_ratio = len(re.findall(r'[^a-zA-Z0-9\u4e00-\u9fff\s]', content)) / len(content)
+        special_char_penalty = 500 if special_char_ratio > 0.1 else 0
+
+        return length_score + diversity_score - error_penalty - special_char_penalty
+
+    if markdown_content == "":
+        markdown_score = -2000
+    else:
+        markdown_score = score_content(markdown_content)
+    if jina_content == "":
+        jina_score = -2000
+    else:
+        jina_score = score_content(jina_content)
+
+    print(f"url_to_markdown 得分： {markdown_score}")
+    print(f"jina_ai_Web_crawler 得分： {jina_score}")
+
+    if markdown_score > jina_score:
+        print("choose: 选择 url_to_markdown 的结果")
+        return markdown_content
+    elif markdown_score == jina_score and jina_score < 0:
+        print("choose: 两者都无法访问")
+        return ""
+    else:
+        print("choose: 选择 jina_ai_Web_crawler 的结果")
+        return jina_content
 
 def getddgsearchurl(query, max_results=4):
     try:
@@ -211,7 +265,8 @@ async def get_url_text_list(keywords, search_url_num):
     threads = []
     for url in url_set_list:
         # url_search_thread = ThreadWithReturnValue(target=jina_ai_Web_crawler, args=(url,True,))
-        url_search_thread = ThreadWithReturnValue(target=Web_crawler, args=(url,True,))
+        url_search_thread = ThreadWithReturnValue(target=compare_and_choose_content, args=(url,))
+        # url_search_thread = ThreadWithReturnValue(target=Web_crawler, args=(url,True,))
         url_search_thread.start()
         threads.append(url_search_thread)
 
