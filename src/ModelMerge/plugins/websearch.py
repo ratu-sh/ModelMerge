@@ -20,7 +20,7 @@ class ThreadWithReturnValue(threading.Thread):
 import re
 import httpx
 import lxml.html
-from lxml.html.clean import Cleaner
+from lxml_html_clean import Cleaner
 from html2text import HTML2Text
 from textwrap import dedent
 
