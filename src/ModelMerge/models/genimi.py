@@ -305,6 +305,7 @@ class gemini(BaseLLM):
         function_full_response: str = "{"
         need_function_call = False
         revicing_function_call = False
+        total_tokens = 0
         try:
             async with self.aclient.stream(
                 "post",
@@ -317,7 +318,7 @@ class gemini(BaseLLM):
                     async for line in response.aiter_lines():
                         if not line:
                             continue
-                        print(line)
+                        # print(line)
                         if line and '\"text\": \"' in line:
                             content = line.split('\"text\": \"')[1][:-1]
                             content = "\n".join(content.split("\\n"))
@@ -368,4 +369,4 @@ class gemini(BaseLLM):
             async for chunk in self.ask_stream_async(function_response, response_role, convo_id=convo_id, function_name=function_call_name, total_tokens=total_tokens, model=model, function_arguments=function_call, api_key=kwargs.get('api_key', self.api_key), plugins=kwargs.get("plugins", PLUGINS)):
                 yield chunk
         else:
-            self.add_to_conversation([{"text": full_response}], response_role, convo_id=convo_id, pass_history=pass_history)
+            self.add_to_conversation([{"text": full_response}], response_role, convo_id=convo_id, total_tokens=total_tokens, pass_history=pass_history)
