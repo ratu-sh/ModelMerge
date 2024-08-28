@@ -6,6 +6,11 @@ import tiktoken
 
 from .base import BaseLLM
 
+import copy
+from ..plugins import PLUGINS, get_tools_result, get_tools_result_async
+from ..tools import function_call_list
+
+
 class gemini(BaseLLM):
     def __init__(
         self,
@@ -16,9 +21,12 @@ class gemini(BaseLLM):
         temperature: float = 0.5,
         top_p: float = 0.7,
         timeout: float = 20,
+        use_plugins: bool = True,
     ):
-        super().__init__(api_key, engine, system_prompt=system_prompt, timeout=timeout, temperature=temperature, top_p=top_p)
-        self.api_url = api_url
+        url = api_url.format(model=engine, stream="streamGenerateContent", api_key=os.environ.get("GOOGLE_AI_API_KEY", api_key))
+        super().__init__(api_key, engine, url, system_prompt=system_prompt, timeout=timeout, temperature=temperature, top_p=top_p, use_plugins=use_plugins)
+        # self.api_url = api_url
+
         self.conversation: dict[str, list[dict]] = {
             "default": [],
         }
@@ -30,6 +38,7 @@ class gemini(BaseLLM):
         convo_id: str = "default",
         pass_history: int = 9999,
         total_tokens: int = 0,
+        function_arguments: str = "",
     ) -> None:
         """
         Add a message to the conversation
@@ -38,9 +47,36 @@ class gemini(BaseLLM):
         if convo_id not in self.conversation or pass_history <= 2:
             self.reset(convo_id=convo_id)
         # print("message", message)
-        if isinstance(message, str):
-            message = [{"text": message}]
-        self.conversation[convo_id].append({"role": role, "parts": message})
+
+        if function_arguments:
+            self.conversation[convo_id].append(
+                {
+                    "role": "model",
+                    "parts": [function_arguments]
+                }
+            )
+            function_call_name = function_arguments["functionCall"]["name"]
+            self.conversation[convo_id].append(
+                {
+                    "role": "function",
+                    "parts": [{
+                    "functionResponse": {
+                        "name": function_call_name,
+                        "response": {
+                            "name": function_call_name,
+                            "content": {
+                                "result": message,
+                            }
+                        }
+                    }
+                    }]
+                }
+            )
+
+        else:
+            if isinstance(message, str):
+                message = [{"text": message}]
+            self.conversation[convo_id].append({"role": role, "parts": message})
 
         history_len = len(self.conversation[convo_id])
         history = pass_history
@@ -191,14 +227,16 @@ class gemini(BaseLLM):
         convo_id: str = "default",
         model: str = None,
         pass_history: int = 9999,
-        model_max_tokens: int = 4096,
         systemprompt: str = None,
+        language: str = "English",
+        function_arguments: str = "",
+        total_tokens: int = 0,
         **kwargs,
     ):
         self.system_prompt = systemprompt or self.system_prompt
         if convo_id not in self.conversation or pass_history <= 2:
             self.reset(convo_id=convo_id, system_prompt=self.system_prompt)
-        self.add_to_conversation(prompt, role, convo_id=convo_id, pass_history=pass_history)
+        self.add_to_conversation(prompt, role, convo_id=convo_id, total_tokens=total_tokens, function_arguments=function_arguments, pass_history=pass_history)
         # self.__truncate_conversation(convo_id=convo_id)
         # print(self.conversation[convo_id])
 
@@ -231,13 +269,42 @@ class gemini(BaseLLM):
                 }
             ],
         }
+
+        plugins = kwargs.get("plugins", PLUGINS)
+        if all(value == False for value in plugins.values()) == False and self.use_plugins:
+            tools = {
+                "tools": [
+                    {
+                        "function_declarations": [
+
+                        ]
+                    }
+                ],
+                "tool_config": {
+                    "function_calling_config": {
+                        "mode": "AUTO",
+                    },
+                },
+            }
+            json_post.update(copy.deepcopy(tools))
+            for item in plugins.keys():
+                try:
+                    if plugins[item]:
+                        json_post["tools"][0]["function_declarations"].append(function_call_list[item])
+                except:
+                    pass
+
         replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', json.dumps(json_post)))
         print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
 
-        url = self.api_url.format(model=model or self.engine, stream="streamGenerateContent", api_key=os.environ.get("GOOGLE_AI_API_KEY", self.api_key) or kwargs.get("api_key"))
+        # url = self.api_url.format(model=model or self.engine, stream="streamGenerateContent", api_key=os.environ.get("GOOGLE_AI_API_KEY", self.api_key) or kwargs.get("api_key"))
+        url = self.api_url.source_api_url
 
         response_role: str = "model"
         full_response: str = ""
+        function_full_response: str = "{"
+        need_function_call = False
+        revicing_function_call = False
         try:
             async with self.aclient.stream(
                 "post",
@@ -250,11 +317,26 @@ class gemini(BaseLLM):
                     async for line in response.aiter_lines():
                         if not line:
                             continue
+                        print(line)
                         if line and '\"text\": \"' in line:
                             content = line.split('\"text\": \"')[1][:-1]
                             content = "\n".join(content.split("\\n"))
                             full_response += content
                             yield content
+
+                        if line and '\"totalTokenCount\": ' in line:
+                            content = int(line.split('\"totalTokenCount\": ')[1])
+                            total_tokens = content
+
+                        if line and ('\"functionCall\": {' in line or revicing_function_call):
+                            revicing_function_call = True
+                            need_function_call = True
+                            if ']' in line:
+                                revicing_function_call = False
+                                continue
+
+                            function_full_response += line
+
                 except requests.exceptions.ChunkedEncodingError as e:
                     print("Chunked Encoding Error occurred:", e)
                 except Exception as e:
@@ -268,4 +350,22 @@ class gemini(BaseLLM):
             print(response.text)
             raise BaseException(f"{response.status_code} {response.reason} {response.text}")
 
-        self.add_to_conversation([{"text": full_response}], response_role, convo_id=convo_id, pass_history=pass_history)
+        print("\n\rtotal_tokens", total_tokens)
+        if need_function_call:
+            # print(function_full_response)
+            function_call = json.loads(function_full_response)
+            print(json.dumps(function_call, indent=4, ensure_ascii=False))
+            function_call_name = function_call["functionCall"]["name"]
+            function_full_response = json.dumps(function_call["functionCall"]["args"])
+            function_call_max_tokens = 32000
+            print("\033[32m function_call", function_call_name, "max token:", function_call_max_tokens, "\033[0m")
+            async for chunk in get_tools_result_async(function_call_name, function_full_response, function_call_max_tokens, model or self.engine, gemini, kwargs.get('api_key', self.api_key), self.api_url, use_plugins=False, model=model, add_message=self.add_to_conversation, convo_id=convo_id, language=language):
+                if "function_response:" in chunk:
+                    function_response = chunk.replace("function_response:", "")
+                else:
+                    yield chunk
+            response_role = "model"
+            async for chunk in self.ask_stream_async(function_response, response_role, convo_id=convo_id, function_name=function_call_name, total_tokens=total_tokens, model=model, function_arguments=function_call, api_key=kwargs.get('api_key', self.api_key), plugins=kwargs.get("plugins", PLUGINS)):
+                yield chunk
+        else:
+            self.add_to_conversation([{"text": full_response}], response_role, convo_id=convo_id, pass_history=pass_history)
