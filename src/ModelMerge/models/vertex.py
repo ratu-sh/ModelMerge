@@ -2,31 +2,87 @@ import os
 import re
 import json
 import requests
-import tiktoken
 
-from .base import BaseLLM
+
+from .base import BaseLLM, BaseAPI
 
 import copy
 from ..plugins import PLUGINS, get_tools_result, get_tools_result_async
 from ..tools import function_call_list
 
+import time
+import httpx
+import base64
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives.serialization import load_pem_private_key
 
-class gemini(BaseLLM):
+def create_jwt(client_email, private_key):
+    # JWT Header
+    header = json.dumps({
+        "alg": "RS256",
+        "typ": "JWT"
+    }).encode()
+
+    # JWT Payload
+    now = int(time.time())
+    payload = json.dumps({
+        "iss": client_email,
+        "scope": "https://www.googleapis.com/auth/cloud-platform",
+        "aud": "https://oauth2.googleapis.com/token",
+        "exp": now + 3600,
+        "iat": now
+    }).encode()
+
+    # Encode header and payload
+    segments = [
+        base64.urlsafe_b64encode(header).rstrip(b'='),
+        base64.urlsafe_b64encode(payload).rstrip(b'=')
+    ]
+
+    # Create signature
+    signing_input = b'.'.join(segments)
+    private_key = load_pem_private_key(private_key.encode(), password=None)
+    signature = private_key.sign(
+        signing_input,
+        padding.PKCS1v15(),
+        hashes.SHA256()
+    )
+
+    segments.append(base64.urlsafe_b64encode(signature).rstrip(b'='))
+    return b'.'.join(segments).decode()
+
+def get_access_token(client_email, private_key):
+    jwt = create_jwt(client_email, private_key)
+
+    with httpx.Client() as client:
+        response = client.post(
+            "https://oauth2.googleapis.com/token",
+            data={
+                "grant_type": "urn:ietf:params:oauth:grant-type:jwt-bearer",
+                "assertion": jwt
+            },
+            headers={'Content-Type': "application/x-www-form-urlencoded"}
+        )
+        response.raise_for_status()
+        return response.json()["access_token"]
+
+# https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/inference?hl=zh-cn#python
+class vertex(BaseLLM):
     def __init__(
         self,
         api_key: str = None,
         engine: str = os.environ.get("GPT_ENGINE") or "gemini-1.5-pro-latest",
-        api_url: str = "https://generativelanguage.googleapis.com/v1beta/models/{model}:{stream}?key={api_key}",
+        api_url: str = "https://us-central1-aiplatform.googleapis.com/v1/projects/{PROJECT_ID}/locations/us-central1/publishers/google/models/{MODEL_ID}:{stream}",
         system_prompt: str = "You are Gemini, a large language model trained by Google. Respond conversationally",
+        project_id: str = os.environ.get("VERTEX_PROJECT_ID", None),
         temperature: float = 0.5,
         top_p: float = 0.7,
         timeout: float = 20,
         use_plugins: bool = True,
     ):
-        url = api_url.format(model=engine, stream="streamGenerateContent", api_key=os.environ.get("GOOGLE_AI_API_KEY", api_key))
+        url = api_url.format(PROJECT_ID=os.environ.get("VERTEX_PROJECT_ID", project_id), MODEL_ID=engine, stream="streamGenerateContent")
         super().__init__(api_key, engine, url, system_prompt=system_prompt, timeout=timeout, temperature=temperature, top_p=top_p, use_plugins=use_plugins)
-        # self.api_url = api_url
-
         self.conversation: dict[str, list[dict]] = {
             "default": [],
         }
@@ -96,38 +152,6 @@ class gemini(BaseLLM):
         self.system_prompt = system_prompt or self.system_prompt
         self.conversation[convo_id] = list()
 
-    def __truncate_conversation(self, convo_id: str = "default") -> None:
-        """
-        Truncate the conversation
-        """
-        while True:
-            if (
-                self.get_token_count(convo_id) > self.truncate_limit
-                and len(self.conversation[convo_id]) > 1
-            ):
-                # Don't remove the first message
-                self.conversation[convo_id].pop(1)
-            else:
-                break
-
-    def get_token_count(self, convo_id: str = "default") -> int:
-        """
-        Get token count
-        """
-        encoding = tiktoken.get_encoding("cl100k_base")
-
-        num_tokens = 0
-        for message in self.conversation[convo_id]:
-            # every message follows <im_start>{role/name}\n{content}<im_end>\n
-            num_tokens += 5
-            for key, value in message.items():
-                if value:
-                    num_tokens += len(encoding.encode(value))
-                if key == "name":  # if there's a name, the role is omitted
-                    num_tokens += 5  # role is always required and always 1 token
-        num_tokens += 5  # every reply is primed with <im_start>assistant
-        return num_tokens
-
     def ask_stream(
         self,
         prompt: str,
@@ -143,7 +167,6 @@ class gemini(BaseLLM):
         if convo_id not in self.conversation or pass_history <= 2:
             self.reset(convo_id=convo_id, system_prompt=self.system_prompt)
         self.add_to_conversation(prompt, role, convo_id=convo_id, pass_history=pass_history)
-        # self.__truncate_conversation(convo_id=convo_id)
         # print(self.conversation[convo_id])
 
         headers = {
@@ -237,10 +260,13 @@ class gemini(BaseLLM):
         if convo_id not in self.conversation or pass_history <= 2:
             self.reset(convo_id=convo_id, system_prompt=self.system_prompt)
         self.add_to_conversation(prompt, role, convo_id=convo_id, total_tokens=total_tokens, function_arguments=function_arguments, pass_history=pass_history)
-        # self.__truncate_conversation(convo_id=convo_id)
         # print(self.conversation[convo_id])
 
+        client_email = os.environ.get("VERTEX_CLIENT_EMAIL")
+        private_key = os.environ.get("VERTEX_PRIVATE_KEY")
+        access_token = get_access_token(client_email, private_key)
         headers = {
+            'Authorization': f"Bearer {access_token}",
             "Content-Type": "application/json",
         }
 
@@ -249,25 +275,31 @@ class gemini(BaseLLM):
                 "role": "user",
                 "content": prompt
             }],
-            "systemInstruction": {"parts": [{"text": self.system_prompt}]},
-            "safetySettings": [
-                {
-                    "category": "HARM_CATEGORY_HARASSMENT",
-                    "threshold": "BLOCK_NONE"
-                },
-                {
-                    "category": "HARM_CATEGORY_HATE_SPEECH",
-                    "threshold": "BLOCK_NONE"
-                },
-                {
-                    "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                    "threshold": "BLOCK_NONE"
-                },
-                {
-                    "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-                    "threshold": "BLOCK_NONE"
-                }
-            ],
+            "system_instruction": {"parts": [{"text": self.system_prompt}]},
+            # "safety_settings": [
+            #     {
+            #         "category": "HARM_CATEGORY_HARASSMENT",
+            #         "threshold": "BLOCK_NONE"
+            #     },
+            #     {
+            #         "category": "HARM_CATEGORY_HATE_SPEECH",
+            #         "threshold": "BLOCK_NONE"
+            #     },
+            #     {
+            #         "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            #         "threshold": "BLOCK_NONE"
+            #     },
+            #     {
+            #         "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+            #         "threshold": "BLOCK_NONE"
+            #     }
+            # ],
+            "generationConfig": {
+                "temperature": self.temperature,
+                "max_output_tokens": 256,
+                "top_k": 40,
+                "top_p": 0.95
+            },
         }
 
         plugins = kwargs.get("plugins", PLUGINS)
@@ -297,7 +329,8 @@ class gemini(BaseLLM):
         replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', json.dumps(json_post)))
         print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
 
-        # url = self.api_url.format(model=model or self.engine, stream="streamGenerateContent", api_key=os.environ.get("GOOGLE_AI_API_KEY", self.api_key) or kwargs.get("api_key"))
+        url = "https://us-central1-aiplatform.googleapis.com/v1/projects/{PROJECT_ID}/locations/us-central1/publishers/google/models/{MODEL_ID}:{stream}".format(PROJECT_ID=os.environ.get("VERTEX_PROJECT_ID"), MODEL_ID=model, stream="streamGenerateContent")
+        self.api_url = BaseAPI(url)
         url = self.api_url.source_api_url
 
         response_role: str = "model"
@@ -314,6 +347,10 @@ class gemini(BaseLLM):
                 json=json_post,
                 timeout=kwargs.get("timeout", self.timeout),
             ) as response:
+                if response.status_code != 200:
+                    error_content = await response.aread()
+                    error_message = error_content.decode('utf-8')
+                    raise BaseException(f"{response.status_code}: {error_message}")
                 try:
                     async for line in response.aiter_lines():
                         if not line:
@@ -348,6 +385,7 @@ class gemini(BaseLLM):
             return
 
         if response.status_code != 200:
+            await response.aread()
             print(response.text)
             raise BaseException(f"{response.status_code} {response.reason} {response.text}")
 
@@ -360,7 +398,7 @@ class gemini(BaseLLM):
             function_full_response = json.dumps(function_call["functionCall"]["args"])
             function_call_max_tokens = 32000
             print("\033[32m function_call", function_call_name, "max token:", function_call_max_tokens, "\033[0m")
-            async for chunk in get_tools_result_async(function_call_name, function_full_response, function_call_max_tokens, model or self.engine, gemini, kwargs.get('api_key', self.api_key), self.api_url, use_plugins=False, model=model, add_message=self.add_to_conversation, convo_id=convo_id, language=language):
+            async for chunk in get_tools_result_async(function_call_name, function_full_response, function_call_max_tokens, model or self.engine, vertex, kwargs.get('api_key', self.api_key), self.api_url, use_plugins=False, model=model, add_message=self.add_to_conversation, convo_id=convo_id, language=language):
                 if "function_response:" in chunk:
                     function_response = chunk.replace("function_response:", "")
                 else:
