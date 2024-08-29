@@ -131,9 +131,40 @@ def Document_extract(docurl, docpath=None, engine = None):
         os.remove(docpath)
     return prompt
 
+def split_json_strings(input_string):
+    # 初始化结果列表和当前 JSON 字符串
+    json_strings = []
+    current_json = ""
+    brace_count = 0
+
+    # 遍历输入字符串的每个字符
+    for char in input_string:
+        current_json += char
+        if char == '{':
+            brace_count += 1
+        elif char == '}':
+            brace_count -= 1
+
+            # 如果花括号配对完成，我们找到了一个完整的 JSON 字符串
+            if brace_count == 0:
+                # 尝试解析当前 JSON 字符串
+                try:
+                    json.loads(current_json)
+                    json_strings.append(current_json)
+                    current_json = ""
+                except json.JSONDecodeError:
+                    # 如果解析失败，继续添加字符
+                    pass
+    if json_strings == []:
+        json_strings.append(input_string)
+    return json_strings
+
 def check_json(json_data):
     while True:
         try:
+            result = split_json_strings(json_data)
+            if len(result) > 0:
+                json_data = result[0]
             json.loads(json_data)
             break
         except json.decoder.JSONDecodeError as e:
