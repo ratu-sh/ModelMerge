@@ -31,9 +31,14 @@ def url_to_markdown(url):
             text = httpx.get(url, verify=False, timeout=5).text
             if text == "":
                 return "抱歉，目前无法访问该网页。"
-            body = lxml.html.fromstring(text).xpath('//body')[0]
-            body = Cleaner(javascript=True, style=True).clean_html(body)
-            return ''.join(lxml.html.tostring(c, encoding='unicode') for c in body)
+            body = lxml.html.fromstring(text).xpath('//body')
+            if body == [] and text != "":
+                body = text
+                return body
+            else:
+                body = body[0]
+                body = Cleaner(javascript=True, style=True).clean_html(body)
+                return ''.join(lxml.html.tostring(c, encoding='unicode') for c in body)
         except Exception as e:
             print('\033[31m')
             print("error: url_to_markdown url", url)

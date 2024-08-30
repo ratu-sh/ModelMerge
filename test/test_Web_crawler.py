@@ -82,9 +82,14 @@ def url_to_markdown(url):
             text = httpx.get(url, verify=False, timeout=5).text
             if text == "":
                 return "抱歉，目前无法访问该网页。"
-            body = lxml.html.fromstring(text).xpath('//body')[0]
-            body = Cleaner(javascript=True, style=True).clean_html(body)
-            return ''.join(lxml.html.tostring(c, encoding='unicode') for c in body)
+            body = lxml.html.fromstring(text).xpath('//body')
+            if body == [] and text != "":
+                body = text
+                return body
+            else:
+                body = body[0]
+                body = Cleaner(javascript=True, style=True).clean_html(body)
+                return ''.join(lxml.html.tostring(c, encoding='unicode') for c in body)
         except Exception as e:
             print('\033[31m')
             print("error: url", url)
@@ -233,7 +238,8 @@ start_time = time.time()
 # for url in ['https://www.airuniversity.af.edu/JIPA/Display/Article/3111127/the-uschina-trade-war-vietnam-emerges-as-the-greatest-winner/']:
 # for url in ['https://zhuanlan.zhihu.com/p/646786536']:
 # for url in ['https://zh.wikipedia.org/wiki/%E4%BF%84%E7%BE%85%E6%96%AF%E5%85%A5%E4%BE%B5%E7%83%8F%E5%85%8B%E8%98%AD']:
-for url in ['https://stock.finance.sina.com.cn/usstock/quotes/aapl.html']:
+for url in ['https://raw.githubusercontent.com/yym68686/ChatGPT-Telegram-Bot/main/README.md']:
+# for url in ['https://stock.finance.sina.com.cn/usstock/quotes/aapl.html']:
     # Web_crawler(url)
     # print(get_body(url))
     # print('-----------------------------')
