@@ -259,12 +259,14 @@ class gemini(BaseLLM):
                 except:
                     pass
 
-        replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', json.dumps(json_post)))
-        print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
-
         url = "https://generativelanguage.googleapis.com/v1beta/models/{model}:{stream}?key={api_key}".format(model=model, stream="streamGenerateContent", api_key=os.environ.get("GOOGLE_AI_API_KEY", self.api_key) or kwargs.get("api_key"))
         self.api_url = BaseAPI(url)
         url = self.api_url.source_api_url
+        print("url", url)
+
+        replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', json.dumps(json_post)))
+        print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
+
 
         response_role: str = "model"
         full_response: str = ""
@@ -280,6 +282,10 @@ class gemini(BaseLLM):
                 json=json_post,
                 timeout=kwargs.get("timeout", self.timeout),
             ) as response:
+                if response.status_code != 200:
+                    error_content = await response.aread()
+                    error_message = error_content.decode('utf-8')
+                    raise BaseException(f"{response.status_code}: {error_message}")
                 try:
                     async for line in response.aiter_lines():
                         if not line:
@@ -314,6 +320,7 @@ class gemini(BaseLLM):
             return
 
         if response.status_code != 200:
+            await response.aread()
             print(response.text)
             raise BaseException(f"{response.status_code} {response.reason} {response.text}")
 
