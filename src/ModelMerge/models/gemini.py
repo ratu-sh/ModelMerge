@@ -8,6 +8,7 @@ from .base import BaseLLM, BaseAPI
 import copy
 from ..plugins import PLUGINS, get_tools_result, get_tools_result_async
 from ..tools import function_call_list
+from ..utils.scripts import safe_get
 
 
 class gemini(BaseLLM):
@@ -82,7 +83,10 @@ class gemini(BaseLLM):
         if pass_history < 2:
             history = 2
         while history_len > history:
-            self.conversation[convo_id].pop(1)
+            mess_body = self.conversation[convo_id].pop(1)
+            if safe_get(mess_body, "parts", 0, "functionCall"):
+                self.conversation[convo_id].pop(1)
+                history_len = history_len - 1
             history_len = history_len - 1
 
         if total_tokens:

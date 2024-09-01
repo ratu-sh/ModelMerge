@@ -7,7 +7,7 @@ import requests
 
 from .base import BaseLLM
 from ..plugins import PLUGINS, get_tools_result, get_tools_result_async
-from ..utils.scripts import check_json
+from ..utils.scripts import check_json, safe_get
 from ..tools import claude_tools_list
 
 class claudeConversation(dict):
@@ -247,7 +247,10 @@ class claude3(BaseLLM):
         if pass_history < 2:
             history = 2
         while history_len > history:
-            self.conversation[convo_id].pop(1)
+            mess_body = self.conversation[convo_id].pop(1)
+            if safe_get(mess_body, "content", 0, "type") == "tool_use":
+                self.conversation[convo_id].pop(1)
+                history_len = history_len - 1
             history_len = history_len - 1
 
         if total_tokens:

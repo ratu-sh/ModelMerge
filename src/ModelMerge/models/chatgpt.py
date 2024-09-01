@@ -140,7 +140,10 @@ class chatgpt(BaseLLM):
         if pass_history < 2:
             history = 2
         while history_len > history:
-            self.conversation[convo_id].pop(1)
+            mess_body = self.conversation[convo_id].pop(1)
+            if mess_body.get("tool_calls"):
+                self.conversation[convo_id].pop(1)
+                history_len = history_len - 1
             history_len = history_len - 1
 
         if total_tokens:
