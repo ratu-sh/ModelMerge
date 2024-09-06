@@ -136,7 +136,6 @@ def jina_ai_Web_crawler(url: str, isSearch=False) -> str:
             print("Skipping large file:", url)
             return result
         soup = BeautifulSoup(response.text.encode(response.encoding), 'lxml', from_encoding='utf-8')
-
         table_contents = ""
         tables = soup.find_all('table')
         for table in tables:
@@ -238,7 +237,8 @@ start_time = time.time()
 # for url in ['https://www.airuniversity.af.edu/JIPA/Display/Article/3111127/the-uschina-trade-war-vietnam-emerges-as-the-greatest-winner/']:
 # for url in ['https://zhuanlan.zhihu.com/p/646786536']:
 # for url in ['https://zh.wikipedia.org/wiki/%E4%BF%84%E7%BE%85%E6%96%AF%E5%85%A5%E4%BE%B5%E7%83%8F%E5%85%8B%E8%98%AD']:
-for url in ['https://raw.githubusercontent.com/yym68686/ChatGPT-Telegram-Bot/main/README.md']:
+# for url in ['https://raw.githubusercontent.com/yym68686/ChatGPT-Telegram-Bot/main/README.md']:
+for url in ['https://raw.githubusercontent.com/openai/openai-python/main/src/openai/api_requestor.py']:
 # for url in ['https://stock.finance.sina.com.cn/usstock/quotes/aapl.html']:
     # Web_crawler(url)
     # print(get_body(url))

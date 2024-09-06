@@ -107,10 +107,10 @@ class gemini(BaseLLM):
         model: str = None,
         pass_history: int = 9999,
         model_max_tokens: int = 4096,
-        systemprompt: str = None,
+        system_prompt: str = None,
         **kwargs,
     ):
-        self.system_prompt = systemprompt or self.system_prompt
+        self.system_prompt = system_prompt or self.system_prompt
         if convo_id not in self.conversation or pass_history <= 2:
             self.reset(convo_id=convo_id, system_prompt=self.system_prompt)
         self.add_to_conversation(prompt, role, convo_id=convo_id, pass_history=pass_history)
@@ -197,13 +197,13 @@ class gemini(BaseLLM):
         convo_id: str = "default",
         model: str = None,
         pass_history: int = 9999,
-        systemprompt: str = None,
+        system_prompt: str = None,
         language: str = "English",
         function_arguments: str = "",
         total_tokens: int = 0,
         **kwargs,
     ):
-        self.system_prompt = systemprompt or self.system_prompt
+        self.system_prompt = system_prompt or self.system_prompt
         if convo_id not in self.conversation or pass_history <= 2:
             self.reset(convo_id=convo_id, system_prompt=self.system_prompt)
         self.add_to_conversation(prompt, role, convo_id=convo_id, total_tokens=total_tokens, function_arguments=function_arguments, pass_history=pass_history)
@@ -343,7 +343,7 @@ class gemini(BaseLLM):
                 else:
                     yield chunk
             response_role = "model"
-            async for chunk in self.ask_stream_async(function_response, response_role, convo_id=convo_id, function_name=function_call_name, total_tokens=total_tokens, model=model, function_arguments=function_call, api_key=kwargs.get('api_key', self.api_key), plugins=kwargs.get("plugins", PLUGINS)):
+            async for chunk in self.ask_stream_async(function_response, response_role, convo_id=convo_id, function_name=function_call_name, total_tokens=total_tokens, model=model, function_arguments=function_call, api_key=kwargs.get('api_key', self.api_key), plugins=kwargs.get("plugins", PLUGINS), system_prompt=system_prompt):
                 yield chunk
         else:
             self.add_to_conversation([{"text": full_response}], response_role, convo_id=convo_id, total_tokens=total_tokens, pass_history=pass_history)
