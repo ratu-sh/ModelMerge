@@ -1,21 +1,21 @@
 # modelmerge
 
-[中文](./README-zh.md)
+[English](./README.md) | [Chinese](./README-zh.md)
 
-modelmerge is a powerful library designed to simplify and unify the use of various large language models, including duckduckgo, GPT-4, GPT-3.5, Claude3, Claude2, Gemini1.5 Pro, DALL-E 3, and Groq. This library supports GPT-style function calls and comes with built-in Google search and URL summarization features, significantly enhancing the utility and flexibility of the models.
+modelmerge is a powerful library designed to simplify and unify the usage of different large language models, including GPT-3.5/4/4 Turbo/4o/4o mini, DALL-E 3, Claude2/3/3.5, Gemini1.5 Pro/Flash, Vertex AI (Claude, Gemini), DuckDuckGo, and Groq. The library supports GPT-format function calls and has built-in Google search and URL summarization features, greatly enhancing the practicality and flexibility of the models.
 
-## Features
+## Characteristics
 
-- **Multi-Model Support**: Integrates a variety of the latest large language models.
-- **Real-Time Interaction**: Supports real-time query streams for instantaneous model responses.
-- **Functionality Expansion**: Easily extends model capabilities, such as conducting web searches or content summarization, through built-in function call support.
-- **Simplified Interface**: Provides a clean API interface, making it easy to call and manage models.
+- **Multi-model support**: Integrate various latest large language models.
+- **Real-time Interaction**: Supports real-time query streams, real-time model response retrieval.
+- **Function Expansion**: With built-in function call support, the model's capabilities can be easily extended, such as performing web searches or content summarization.
+- **Simple Interface**: Provides a concise API interface, making it easy to call and manage models.
 
 ## Quick Start
 
-Here is a guide on how to quickly integrate and use modelmerge in your Python project.
+The following is a guide on how to quickly integrate and use modelmerge in your Python project.
 
-### Installation
+### Install
 
 First, you need to install modelmerge. It can be installed directly via pip:
 
@@ -23,44 +23,46 @@ First, you need to install modelmerge. It can be installed directly via pip:
 pip install modelmerge
 ```
 
-### Usage Example
+### Usage example
 
-Here is a simple example demonstrating how to use modelmerge to request the GPT-4 model and handle the returned streaming data:
+The following is a simple example demonstrating how to use modelmerge to request the GPT-4 model and handle the returned streaming data:
 
 ```python
-from modelmerge.models import chatgpt
+from ModelMerge import chatgpt
 
-# Initialize the model, set API key and chosen model
-bot = chatgpt(api_key="{YOUR_API_KEY}", engine="gpt-4-turbo-2024-04-09")
+# Initialize the model, set the API key and selected model
+bot = chatgpt(api_key="{YOUR_API_KEY}", engine="gpt-4o")
 
-# Send a request and get responses in real time
+# Get the answer
+result = bot.ask("python list use")
+
+# Send the request and get the streaming response in real-time
 for text in bot.ask_stream("python list use"):
     print(text, end="")
 ```
 
-### Configuration
+## Configuration
 
-You can adjust different model parameters, including API keys and model selection, by modifying the configuration file.
+You can adjust the parameters of different models by modifying the configuration file, including API key, model selection, etc.
 
-### Supported Models
+## Supported models
 
-- GPT-4
-- GPT-3.5
-- Claude3
-- Claude2
-- Gemini1.5 Pro
-- DuckDuckGo(gpt-4o-mini, claude-3-haiku, Meta-Llama-3.1-70B, Mixtral-8x7B)
+- GPT-3.5/4/4 Turbo/4o/4o mini
 - DALL-E 3
+- Claude2/3/3.5
+- Gemini1.5 Pro/Flash
+- Vertex AI (Claude, Gemini)
 - Groq
+- DuckDuckGo(gpt-4o-mini, claude-3-haiku, Meta-Llama-3.1-70B, Mixtral-8x7B)
 
-### License
+## License
 
 This project is licensed under the MIT License.
 
-### Contributions
+## Contribution
 
-Contributions are welcome! Please submit issues or pull requests on GitHub to improve the project.
+Welcome to contribute improvements by submitting issues or pull requests through GitHub.
 
-### Contact
+## Contact Information
 
-If you have any questions or need assistance, please contact us at Your Email.
+If you have any questions or need assistance, please contact us at [yym68686@outlook.com](mailto:yym68686@outlook.com).
