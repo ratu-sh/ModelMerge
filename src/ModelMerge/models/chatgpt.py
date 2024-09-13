@@ -325,6 +325,16 @@ class chatgpt(BaseLLM):
             "user": role,
         }
         json_post_body.update(copy.deepcopy(body))
+
+        if "o1-preview" in model or "o1-mini" in model:
+            for key in body.keys():
+                if key in json_post_body:
+                    del json_post_body[key]
+            if json_post_body["messages"][0]["role"] == "system":
+                json_post_body["messages"].pop(0)
+            del json_post_body["stream_options"]
+            del json_post_body["stream"]
+
         plugins = kwargs.get("plugins", PLUGINS)
         if all(value == False for value in plugins.values()) or self.use_plugins == False:
             return json_post_body
@@ -368,6 +378,10 @@ class chatgpt(BaseLLM):
         print("api_url", kwargs.get('api_url', self.api_url.chat_url))
         print("api_key", kwargs.get('api_key', self.api_key))
         json_post["max_tokens"] = model_max_tokens
+
+        if "o1-preview" in model or "o1-mini" in model:
+            del json_post["max_tokens"]
+
         # print("api_url", self.api_url.chat_url)
         # if "tools" in json_post:
         #     del json_post["tools"]
@@ -579,6 +593,10 @@ class chatgpt(BaseLLM):
         print("api_url", kwargs.get('api_url', self.api_url.chat_url))
         print("api_key", kwargs.get('api_key', self.api_key))
         json_post["max_tokens"] = model_max_tokens
+
+        if "o1-preview" in model or "o1-mini" in model:
+            del json_post["max_tokens"]
+
         # print("api_url", self.api_url.chat_url)
         # if "tools" in json_post:
         #     del json_post["tools"]
@@ -670,6 +688,16 @@ class chatgpt(BaseLLM):
                     else:
                         raise Exception(f"response is None, please check the connection or network.")
 
+                    if "o1-preview" in model or "o1-mini" in model:
+                        line = response.text
+                        line = json.loads(line)
+                        full_response = safe_get(line, "choices", 0, "message", "content")
+                        if full_response:
+                            yield full_response
+                        else:
+                            yield line
+                        break
+
                     async for line in response.aiter_lines():
                         line = line.strip()
                         if not line or line.startswith(':'):
@@ -681,7 +709,8 @@ class chatgpt(BaseLLM):
                                 break
                         else:
                             line = json.loads(line)
-                            if safe_get(line, "choices", 0, "message", "content"):
+                            full_response = safe_get(line, "choices", 0, "message", "content")
+                            if full_response:
                                 yield full_response
                             else:
                                 yield line
