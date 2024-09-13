@@ -302,7 +302,7 @@ class chatgpt(BaseLLM):
         self.conversation[convo_id][0] = {"role": "system","content": self.system_prompt}
         json_post_body = {
             "model": model or self.engine,
-            "messages": self.conversation[convo_id] if pass_history else [{"role": "system","content": self.system_prompt},{"role": role, "content": prompt}],
+            "messages": copy.deepcopy(self.conversation[convo_id]) if pass_history else [{"role": "system","content": self.system_prompt},{"role": role, "content": prompt}],
             "max_tokens": 5000,
             "stream": True,
             "stream_options": {
