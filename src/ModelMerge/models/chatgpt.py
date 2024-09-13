@@ -811,6 +811,7 @@ class chatgpt(BaseLLM):
             role=role,
             convo_id=convo_id,
             pass_history=pass_history,
+            model=model,
             **kwargs,
         )
         full_response: str = "".join([r async for r in response])
