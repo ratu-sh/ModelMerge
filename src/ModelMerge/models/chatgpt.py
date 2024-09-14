@@ -501,7 +501,7 @@ class chatgpt(BaseLLM):
                     full_response = line["choices"][0]["message"]["content"]
                     yield full_response
                 else:
-                    yield line
+                    yield str(line)
                 break
             resp: dict = json.loads(line)
             if "error" in resp:
@@ -691,11 +691,12 @@ class chatgpt(BaseLLM):
                     if "o1-preview" in model or "o1-mini" in model:
                         line = response.text
                         line = json.loads(line)
+                        # print(line)
                         full_response = safe_get(line, "choices", 0, "message", "content")
                         if full_response:
                             yield full_response
                         else:
-                            yield line
+                            yield str(line)
                         break
 
                     async for line in response.aiter_lines():
