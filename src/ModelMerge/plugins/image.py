@@ -19,7 +19,7 @@ class dalle3(BaseLLM):
     def generate(
         self,
         prompt: str,
-        model: str = None,
+        model: str = "",
         **kwargs,
     ):
         url = self.api_url.image_url

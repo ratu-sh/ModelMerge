@@ -149,7 +149,7 @@ class BaseLLM:
         prompt: str,
         role: str = "user",
         convo_id: str = "default",
-        model: str = None,
+        model: str = "",
         pass_history: int = 9999,
         **kwargs,
     ) -> None:
@@ -175,7 +175,7 @@ class BaseLLM:
         prompt: str,
         role: str = "user",
         convo_id: str = "default",
-        model: str = None,
+        model: str = "",
         pass_history: int = 9999,
         **kwargs,
     ):
@@ -192,7 +192,7 @@ class BaseLLM:
         prompt: list,
         role: str = "user",
         convo_id: str = "default",
-        model: str = None,
+        model: str = "",
         pass_history: int = 9999,
         function_name: str = "",
         **kwargs,
@@ -207,7 +207,7 @@ class BaseLLM:
         prompt: list,
         role: str = "user",
         convo_id: str = "default",
-        model: str = None,
+        model: str = "",
         pass_history: int = 9999,
         function_name: str = "",
         **kwargs,
@@ -222,7 +222,7 @@ class BaseLLM:
         prompt: str,
         role: str = "user",
         convo_id: str = "default",
-        model: str = None,
+        model: str = "",
         pass_history: int = 9999,
         **kwargs,
     ) -> str:
@@ -248,7 +248,7 @@ class BaseLLM:
         prompt: str,
         role: str = "user",
         convo_id: str = "default",
-        model: str = None,
+        model: str = "",
         pass_history: int = 0,
         **kwargs,
     ) -> str:
