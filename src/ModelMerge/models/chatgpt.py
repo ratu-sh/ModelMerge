@@ -141,6 +141,9 @@ class chatgpt(BaseLLM):
             history = 2
         while history_len > history:
             mess_body = self.conversation[convo_id].pop(1)
+            if mess_body.get("role") == "user":
+                self.conversation[convo_id].pop(1)
+                history_len = history_len - 1
             if mess_body.get("tool_calls"):
                 self.conversation[convo_id].pop(1)
                 history_len = history_len - 1
