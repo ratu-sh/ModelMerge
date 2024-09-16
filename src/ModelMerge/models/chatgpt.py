@@ -381,6 +381,8 @@ class chatgpt(BaseLLM):
 
         if "o1-preview" in model or "o1-mini" in model:
             del json_post["max_tokens"]
+            del json_post["tools"]
+            del json_post["tool_choice"]
 
         # print("api_url", self.api_url.chat_url)
         # if "tools" in json_post:
@@ -596,6 +598,8 @@ class chatgpt(BaseLLM):
 
         if "o1-preview" in model or "o1-mini" in model:
             del json_post["max_tokens"]
+            del json_post["tools"]
+            del json_post["tool_choice"]
 
         # print("api_url", self.api_url.chat_url)
         # if "tools" in json_post:
