@@ -84,13 +84,13 @@ class gemini(BaseLLM):
             history = 2
         while history_len > history:
             mess_body = self.conversation[convo_id].pop(1)
-            if mess_body.get("role") == "user":
-                self.conversation[convo_id].pop(1)
-                history_len = history_len - 1
-            if safe_get(mess_body, "parts", 0, "functionCall"):
-                self.conversation[convo_id].pop(1)
-                history_len = history_len - 1
             history_len = history_len - 1
+            if mess_body.get("role") == "user":
+                mess_body = self.conversation[convo_id].pop(1)
+                history_len = history_len - 1
+                if safe_get(mess_body, "parts", 0, "functionCall"):
+                    self.conversation[convo_id].pop(1)
+                    history_len = history_len - 1
 
         if total_tokens:
             self.tokens_usage[convo_id] += total_tokens
