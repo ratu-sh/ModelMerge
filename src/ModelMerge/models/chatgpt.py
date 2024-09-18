@@ -200,8 +200,8 @@ class chatgpt(BaseLLM):
                 message_token = {
                     "total": 0,
                 }
-
-            print("message_token", message_token, "truncate_limit", self.truncate_limit)
+            if self.print_log:
+                print("message_token", message_token, "truncate_limit", self.truncate_limit)
             if (
                 message_token["total"] > self.truncate_limit
                 and len(self.conversation[convo_id]) > 1
