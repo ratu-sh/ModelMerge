@@ -26,8 +26,9 @@ class claude(BaseLLM):
         top_p: float = 0.7,
         timeout: float = 20,
         use_plugins: bool = True,
+        print_log: bool = False,
     ):
-        super().__init__(api_key, engine, api_url, system_prompt, timeout=timeout, temperature=temperature, top_p=top_p, use_plugins=use_plugins)
+        super().__init__(api_key, engine, api_url, system_prompt, timeout=timeout, temperature=temperature, top_p=top_p, use_plugins=use_plugins, print_log=print_log)
         # self.api_url = api_url
         self.conversation = claudeConversation()
 
@@ -350,8 +351,9 @@ class claude3(BaseLLM):
                 except:
                     pass
 
-        replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', json.dumps(json_post)))
-        print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
+        if self.print_log:
+            replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', json.dumps(json_post)))
+            print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
 
         try:
             response = self.session.post(
@@ -506,8 +508,9 @@ class claude3(BaseLLM):
                 except:
                     pass
 
-        replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', json.dumps(json_post)))
-        print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
+        if self.print_log:
+            replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', json.dumps(json_post)))
+            print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
 
         try:
             response = self.session.post(

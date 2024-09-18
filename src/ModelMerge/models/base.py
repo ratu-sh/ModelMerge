@@ -49,6 +49,7 @@ class BaseLLM:
         reply_count: int = 1,
         truncate_limit: int = None,
         use_plugins: bool = True,
+        print_log: bool = False,
     ) -> None:
         self.api_key: str = api_key
         self.engine: str = engine
@@ -125,6 +126,7 @@ class BaseLLM:
         self.function_calls_counter = {}
         self.function_call_max_loop = 10
         self.use_plugins = use_plugins
+        self.print_log: bool = print_log
 
     def add_to_conversation(
         self,

@@ -81,9 +81,10 @@ class vertex(BaseLLM):
         top_p: float = 0.7,
         timeout: float = 20,
         use_plugins: bool = True,
+        print_log: bool = False,
     ):
         url = api_url.format(PROJECT_ID=os.environ.get("VERTEX_PROJECT_ID", project_id), MODEL_ID=engine, stream="streamGenerateContent")
-        super().__init__(api_key, engine, url, system_prompt=system_prompt, timeout=timeout, temperature=temperature, top_p=top_p, use_plugins=use_plugins)
+        super().__init__(api_key, engine, url, system_prompt=system_prompt, timeout=timeout, temperature=temperature, top_p=top_p, use_plugins=use_plugins, print_log=print_log)
         self.conversation: dict[str, list[dict]] = {
             "default": [],
         }
@@ -205,8 +206,9 @@ class vertex(BaseLLM):
                 }
             ],
         }
-        replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', json.dumps(json_post)))
-        print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
+        if self.print_log:
+            replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', json.dumps(json_post)))
+            print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
 
         url = self.api_url.format(model=model or self.engine, stream="streamGenerateContent", api_key=self.api_key)
 
@@ -333,8 +335,9 @@ class vertex(BaseLLM):
                 except:
                     pass
 
-        replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', json.dumps(json_post)))
-        print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
+        if self.print_log:
+            replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', json.dumps(json_post)))
+            print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
 
         url = "https://us-central1-aiplatform.googleapis.com/v1/projects/{PROJECT_ID}/locations/us-central1/publishers/google/models/{MODEL_ID}:{stream}".format(PROJECT_ID=os.environ.get("VERTEX_PROJECT_ID"), MODEL_ID=model, stream="streamGenerateContent")
         self.api_url = BaseAPI(url)

@@ -22,9 +22,10 @@ class gemini(BaseLLM):
         top_p: float = 0.7,
         timeout: float = 20,
         use_plugins: bool = True,
+        print_log: bool = False,
     ):
         url = api_url.format(model=engine, stream="streamGenerateContent", api_key=os.environ.get("GOOGLE_AI_API_KEY", api_key))
-        super().__init__(api_key, engine, url, system_prompt=system_prompt, timeout=timeout, temperature=temperature, top_p=top_p, use_plugins=use_plugins)
+        super().__init__(api_key, engine, url, system_prompt=system_prompt, timeout=timeout, temperature=temperature, top_p=top_p, use_plugins=use_plugins, print_log=print_log)
         self.api_url: str = BaseAPI(url)
 
         self.conversation: dict[str, list[dict]] = {
@@ -148,8 +149,9 @@ class gemini(BaseLLM):
                 }
             ],
         }
-        replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', json.dumps(json_post)))
-        print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
+        if self.print_log:
+            replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', json.dumps(json_post)))
+            print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
 
         url = self.api_url.format(model=model or self.engine, stream="streamGenerateContent", api_key=self.api_key)
 
@@ -271,9 +273,9 @@ class gemini(BaseLLM):
         url = self.api_url.source_api_url
         print("url", url)
 
-        replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', json.dumps(json_post)))
-        print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
-
+        if self.print_log:
+            replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', json.dumps(json_post)))
+            print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
 
         response_role: str = "model"
         full_response: str = ""

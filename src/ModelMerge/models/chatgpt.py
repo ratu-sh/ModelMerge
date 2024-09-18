@@ -57,11 +57,12 @@ class chatgpt(BaseLLM):
         reply_count: int = 1,
         truncate_limit: int = None,
         use_plugins: bool = True,
+        print_log: bool = False,
     ) -> None:
         """
         Initialize Chatbot with API key (from https://platform.openai.com/account/api-keys)
         """
-        super().__init__(api_key, engine, api_url, system_prompt, proxy, timeout, max_tokens, temperature, top_p, presence_penalty, frequency_penalty, reply_count, truncate_limit, use_plugins=use_plugins)
+        super().__init__(api_key, engine, api_url, system_prompt, proxy, timeout, max_tokens, temperature, top_p, presence_penalty, frequency_penalty, reply_count, truncate_limit, use_plugins=use_plugins, print_log=print_log)
         self.conversation: dict[str, list[dict]] = {
             "default": [
                 {
@@ -399,8 +400,9 @@ class chatgpt(BaseLLM):
         #             "content": mess["content"][0]["text"]
         #         }
         for _ in range(3):
-            replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', json.dumps(json_post)))
-            print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
+            if self.print_log:
+                replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', json.dumps(json_post)))
+                print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
             response = None
             try:
                 response = self.session.post(
@@ -624,8 +626,9 @@ class chatgpt(BaseLLM):
         total_tokens = 0
 
         for _ in range(3):
-            replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', json.dumps(json_post)))
-            print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
+            if self.print_log:
+                replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', json.dumps(json_post)))
+                print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
             try:
                 async with self.aclient.stream(
                     "post",
