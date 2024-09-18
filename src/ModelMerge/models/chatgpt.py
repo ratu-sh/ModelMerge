@@ -378,9 +378,10 @@ class chatgpt(BaseLLM):
         json_post, message_token = self.truncate_conversation(prompt, role, convo_id, model, pass_history, **kwargs)
         # print(self.conversation[convo_id])
         model_max_tokens = kwargs.get("max_tokens", self.max_tokens)
-        print("model_max_tokens", model_max_tokens)
-        print("api_url", kwargs.get('api_url', self.api_url.chat_url))
-        print("api_key", kwargs.get('api_key', self.api_key))
+        if self.print_log:
+            print("model_max_tokens", model_max_tokens)
+            print("api_url", kwargs.get('api_url', self.api_url.chat_url))
+            print("api_key", kwargs.get('api_key', self.api_key))
         json_post["max_tokens"] = model_max_tokens
 
         if "o1-preview" in model or "o1-mini" in model:
@@ -596,9 +597,10 @@ class chatgpt(BaseLLM):
         json_post, message_token = self.truncate_conversation(prompt, role, convo_id, model, pass_history, **kwargs)
         # print(self.conversation[convo_id])
         model_max_tokens = kwargs.get("max_tokens", self.max_tokens)
-        print("model_max_tokens", model_max_tokens)
-        print("api_url", kwargs.get('api_url', self.api_url.chat_url))
-        print("api_key", kwargs.get('api_key', self.api_key))
+        if self.print_log:
+            print("model_max_tokens", model_max_tokens)
+            print("api_url", kwargs.get('api_url', self.api_url.chat_url))
+            print("api_key", kwargs.get('api_key', self.api_key))
         json_post["max_tokens"] = model_max_tokens
 
         if "o1-preview" in model or "o1-mini" in model:
