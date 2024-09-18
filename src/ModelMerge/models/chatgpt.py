@@ -529,8 +529,8 @@ class chatgpt(BaseLLM):
                 function_call_name = function_call_name or safe_get(delta, "tool_calls", 0, "function", "name")
                 function_full_response += safe_get(delta, "tool_calls", 0, "function", "arguments", default="")
                 function_call_id = function_call_id or safe_get(delta, "tool_calls", 0, "id")
-
-        print("\n\rtotal_tokens", total_tokens)
+        if self.print_log:
+            print("\n\rtotal_tokens", total_tokens)
         if response_role == None:
             response_role = "assistant"
         if need_function_call:
@@ -760,8 +760,8 @@ class chatgpt(BaseLLM):
                     e = "You have entered an invalid API URL, please use the correct URL and use the `/start` command to set the API URL again. Specific error is as follows:\n\n" + str(e)
                     raise Exception(f"{e}")
                 raise Exception(f"{e}")
-
-        print("\n\rtotal_tokens", total_tokens)
+        if self.print_log:
+            print("\n\rtotal_tokens", total_tokens)
         if response_role == None:
             response_role = "assistant"
         if need_function_call:

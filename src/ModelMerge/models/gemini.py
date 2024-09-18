@@ -332,8 +332,8 @@ class gemini(BaseLLM):
             await response.aread()
             print(response.text)
             raise BaseException(f"{response.status_code} {response.reason} {response.text}")
-
-        print("\n\rtotal_tokens", total_tokens)
+        if self.print_log:
+            print("\n\rtotal_tokens", total_tokens)
         if need_function_call:
             # print(function_full_response)
             function_call = json.loads(function_full_response)

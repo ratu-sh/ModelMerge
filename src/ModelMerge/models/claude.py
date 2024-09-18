@@ -437,7 +437,8 @@ class claude3(BaseLLM):
         # print("function_full_response", function_full_response)
         # print("function_call_name", function_call_name)
         # print("need_function_call", need_function_call)
-        print("\n\rtotal_tokens", total_tokens)
+        if self.print_log:
+            print("\n\rtotal_tokens", total_tokens)
         if need_function_call:
             function_full_response = check_json(function_full_response)
             print("function_full_response", function_full_response)
@@ -570,8 +571,8 @@ class claude3(BaseLLM):
                 input_tokens = usage.get("input_tokens", 0)
                 output_tokens = usage.get("output_tokens", 0)
                 total_tokens = total_tokens + input_tokens + output_tokens
-
-                print("\n\rtotal_tokens", total_tokens)
+                if self.print_log:
+                    print("\n\rtotal_tokens", total_tokens)
 
             tool_use = resp.get("content_block")
             if tool_use and "tool_use" == tool_use['type']:
