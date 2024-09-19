@@ -178,8 +178,9 @@ class claude3(BaseLLM):
         timeout: float = 20,
         top_p: float = 0.7,
         use_plugins: bool = True,
+        print_log: bool = False,
     ):
-        super().__init__(api_key, engine, api_url, system_prompt, timeout=timeout, temperature=temperature, top_p=top_p, use_plugins=use_plugins)
+        super().__init__(api_key, engine, api_url, system_prompt, timeout=timeout, temperature=temperature, top_p=top_p, use_plugins=use_plugins, print_log=print_log)
         self.conversation: dict[str, list[dict]] = {
             "default": [],
         }
