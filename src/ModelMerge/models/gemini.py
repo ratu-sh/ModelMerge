@@ -26,8 +26,6 @@ class gemini(BaseLLM):
     ):
         url = api_url.format(model=engine, stream="streamGenerateContent", api_key=os.environ.get("GOOGLE_AI_API_KEY", api_key))
         super().__init__(api_key, engine, url, system_prompt=system_prompt, timeout=timeout, temperature=temperature, top_p=top_p, use_plugins=use_plugins, print_log=print_log)
-        self.api_url: str = BaseAPI(url)
-
         self.conversation: dict[str, list[dict]] = {
             "default": [],
         }
@@ -153,7 +151,10 @@ class gemini(BaseLLM):
             replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', json.dumps(json_post)))
             print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
 
-        url = self.api_url.format(model=model or self.engine, stream="streamGenerateContent", api_key=self.api_key)
+        url = "https://generativelanguage.googleapis.com/v1beta/models/{model}:{stream}?key={api_key}".format(model=model, stream="streamGenerateContent", api_key=os.environ.get("GOOGLE_AI_API_KEY", self.api_key) or kwargs.get("api_key"))
+        self.api_url = BaseAPI(url)
+        url = self.api_url.source_api_url
+        print("url", url)
 
         try:
             response = self.session.post(
