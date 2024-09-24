@@ -236,7 +236,7 @@ class BaseLLM:
             prompt=prompt,
             role=role,
             convo_id=convo_id,
-            model=model,
+            model=model or self.engine,
             pass_history=pass_history,
             **kwargs,
         ):
@@ -261,7 +261,7 @@ class BaseLLM:
             prompt=prompt,
             role=role,
             convo_id=convo_id,
-            model=model,
+            model=model or self.engine,
             pass_history=pass_history,
             **kwargs,
         )

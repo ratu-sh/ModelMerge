@@ -547,7 +547,7 @@ class chatgpt(BaseLLM):
                 if function_call_max_tokens <= 0:
                     function_call_max_tokens = int(self.truncate_limit / 2)
                 print("\033[32m function_call", function_call_name, "max token:", function_call_max_tokens, "\033[0m")
-                function_response = yield from get_tools_result(function_call_name, function_full_response, function_call_max_tokens, model or self.engine, chatgpt, kwargs.get('api_key', self.api_key), self.api_url, use_plugins=False, model=model, add_message=self.add_to_conversation, convo_id=convo_id, language=language)
+                function_response = yield from get_tools_result(function_call_name, function_full_response, function_call_max_tokens, model or self.engine, chatgpt, kwargs.get('api_key', self.api_key), self.api_url, use_plugins=False, model=model or self.engine, add_message=self.add_to_conversation, convo_id=convo_id, language=language)
             else:
                 function_response = "无法找到相关信息，停止使用 tools"
             response_role = "tool"
@@ -555,7 +555,7 @@ class chatgpt(BaseLLM):
             # if self.conversation[convo_id][-1]["role"] == "tool" and self.conversation[convo_id][-1]["name"] == "get_search_results":
             #     mess = self.conversation[convo_id].pop(-1)
                 # print("Truncate message:", mess)
-            yield from self.ask_stream(function_response, response_role, convo_id=convo_id, function_name=function_call_name, total_tokens=total_tokens, model=model, function_arguments=function_full_response, function_call_id=function_call_id, api_key=kwargs.get('api_key', self.api_key), plugins=kwargs.get("plugins", PLUGINS), system_prompt=system_prompt)
+            yield from self.ask_stream(function_response, response_role, convo_id=convo_id, function_name=function_call_name, total_tokens=total_tokens, model=model or self.engine, function_arguments=function_full_response, function_call_id=function_call_id, api_key=kwargs.get('api_key', self.api_key), plugins=kwargs.get("plugins", PLUGINS), system_prompt=system_prompt)
         else:
             # if self.conversation[convo_id][-1]["role"] == "tool" and self.conversation[convo_id][-1]["name"] == "get_search_results":
             #     mess = self.conversation[convo_id].pop(-1)
@@ -778,7 +778,7 @@ class chatgpt(BaseLLM):
                 if function_call_max_tokens <= 0:
                     function_call_max_tokens = int(self.truncate_limit / 2)
                 print("\033[32m function_call", function_call_name, "max token:", function_call_max_tokens, "\033[0m")
-                async for chunk in get_tools_result_async(function_call_name, function_full_response, function_call_max_tokens, model or self.engine, chatgpt, kwargs.get('api_key', self.api_key), self.api_url, use_plugins=False, model=model, add_message=self.add_to_conversation, convo_id=convo_id, language=language):
+                async for chunk in get_tools_result_async(function_call_name, function_full_response, function_call_max_tokens, model or self.engine, chatgpt, kwargs.get('api_key', self.api_key), self.api_url, use_plugins=False, model=model or self.engine, add_message=self.add_to_conversation, convo_id=convo_id, language=language):
                     if "function_response:" in chunk:
                         function_response = chunk.replace("function_response:", "")
                     else:
@@ -790,7 +790,7 @@ class chatgpt(BaseLLM):
             # if self.conversation[convo_id][-1]["role"] == "tool" and self.conversation[convo_id][-1]["name"] == "get_search_results":
             #     mess = self.conversation[convo_id].pop(-1)
                 # print("Truncate message:", mess)
-            async for chunk in self.ask_stream_async(function_response, response_role, convo_id=convo_id, function_name=function_call_name, total_tokens=total_tokens, model=model, function_arguments=function_full_response, function_call_id=function_call_id, api_key=kwargs.get('api_key', self.api_key), plugins=kwargs.get("plugins", PLUGINS), system_prompt=system_prompt):
+            async for chunk in self.ask_stream_async(function_response, response_role, convo_id=convo_id, function_name=function_call_name, total_tokens=total_tokens, model=model or self.engine, function_arguments=function_full_response, function_call_id=function_call_id, api_key=kwargs.get('api_key', self.api_key), plugins=kwargs.get("plugins", PLUGINS), system_prompt=system_prompt):
                 yield chunk
         else:
             # if self.conversation[convo_id][-1]["role"] == "tool" and self.conversation[convo_id][-1]["name"] == "get_search_results":
@@ -824,7 +824,7 @@ class chatgpt(BaseLLM):
             role=role,
             convo_id=convo_id,
             pass_history=pass_history,
-            model=model,
+            model=model or self.engine,
             **kwargs,
         )
         full_response: str = "".join([r async for r in response])

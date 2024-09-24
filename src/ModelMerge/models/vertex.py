@@ -408,13 +408,13 @@ class vertex(BaseLLM):
             function_full_response = json.dumps(function_call["functionCall"]["args"])
             function_call_max_tokens = 32000
             print("\033[32m function_call", function_call_name, "max token:", function_call_max_tokens, "\033[0m")
-            async for chunk in get_tools_result_async(function_call_name, function_full_response, function_call_max_tokens, model or self.engine, vertex, kwargs.get('api_key', self.api_key), self.api_url, use_plugins=False, model=model, add_message=self.add_to_conversation, convo_id=convo_id, language=language):
+            async for chunk in get_tools_result_async(function_call_name, function_full_response, function_call_max_tokens, model or self.engine, vertex, kwargs.get('api_key', self.api_key), self.api_url, use_plugins=False, model=model or self.engine, add_message=self.add_to_conversation, convo_id=convo_id, language=language):
                 if "function_response:" in chunk:
                     function_response = chunk.replace("function_response:", "")
                 else:
                     yield chunk
             response_role = "model"
-            async for chunk in self.ask_stream_async(function_response, response_role, convo_id=convo_id, function_name=function_call_name, total_tokens=total_tokens, model=model, function_arguments=function_call, api_key=kwargs.get('api_key', self.api_key), plugins=kwargs.get("plugins", PLUGINS)):
+            async for chunk in self.ask_stream_async(function_response, response_role, convo_id=convo_id, function_name=function_call_name, total_tokens=total_tokens, model=model or self.engine, function_arguments=function_call, api_key=kwargs.get('api_key', self.api_key), plugins=kwargs.get("plugins", PLUGINS)):
                 yield chunk
         else:
             self.add_to_conversation([{"text": full_response}], response_role, convo_id=convo_id, total_tokens=total_tokens, pass_history=pass_history)
