@@ -645,6 +645,8 @@ class chatgpt(BaseLLM):
                         # print("response.status_code", response.status_code, response.status_code == 200, response != None and response.status_code == 200, response.text == "", response.text[:400])
                         if response.status_code == 400 or response.status_code == 422:
                             print("response.text", response.text)
+                            if _ == 2:
+                                raise Exception(f"{response.status_code} {response.reason_phrase} {response.text[:400]}")
                             if "function calling" in response.text:
                                 if "tools" in json_post:
                                     del json_post["tools"]
