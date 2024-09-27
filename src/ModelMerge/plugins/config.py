@@ -21,7 +21,7 @@ async def get_tools_result_async(function_call_name, function_full_response, fun
     function_response = ""
     if function_call_name == "get_search_results":
         prompt = json.loads(function_full_response)["prompt"]
-        yield "🌐 message_search_stage_1"
+        yield "message_search_stage_1"
         llm = robot(api_key=api_key, api_url=api_url.source_api_url, engine=engine, use_plugins=use_plugins)
         keywords = (await llm.ask_async(search_key_word_prompt.format(source=prompt), model=model)).split("\n")
         async for chunk in eval(function_call_name)(prompt, keywords):
@@ -105,7 +105,7 @@ def get_tools_result(function_call_name, function_full_response, function_call_m
     function_response = ""
     if function_call_name == "get_search_results":
         prompt = json.loads(function_full_response)["prompt"]
-        yield "🌐 message_search_stage_1"
+        yield "message_search_stage_1"
         llm = robot(api_key=api_key, api_url=api_url.source_api_url, engine=engine, use_plugins=use_plugins)
         keywords = llm.ask(search_key_word_prompt.format(source=prompt), model=model).split("\n")
         function_response = yield from eval(function_call_name)(prompt, keywords)

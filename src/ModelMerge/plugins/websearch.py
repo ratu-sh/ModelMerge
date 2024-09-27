@@ -223,7 +223,7 @@ def sort_by_time(urls):
     return sorted_urls
 
 async def get_search_url(keywords, search_url_num):
-    yield "🌐 message_search_stage_2"
+    yield "message_search_stage_2"
 
     search_threads = []
     if os.environ.get('GOOGLE_API_KEY', None) and os.environ.get('GOOGLE_CSE_ID', None):
@@ -266,7 +266,7 @@ async def get_url_text_list(keywords, search_url_num):
             url_set_list, url_pdf_set_list = chunk
     # url_set_list, url_pdf_set_list = yield from get_search_url(keywords, search_url_num)
 
-    yield "🌐 message_search_stage_3"
+    yield "message_search_stage_3"
     threads = []
     for url in url_set_list:
         # url_search_thread = ThreadWithReturnValue(target=jina_ai_Web_crawler, args=(url,True,))
@@ -277,7 +277,7 @@ async def get_url_text_list(keywords, search_url_num):
 
     url_text_list = concat_url(threads)
 
-    yield "🌐 message_search_stage_4"
+    yield "message_search_stage_4"
     end_time = record_time.time()
     run_time = end_time - start_time
     print("urls", url_set_list)
