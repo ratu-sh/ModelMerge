@@ -542,7 +542,7 @@ class chatgpt(BaseLLM):
                 self.function_calls_counter[function_call_name] = 1
             else:
                 self.function_calls_counter[function_call_name] += 1
-            if self.function_calls_counter[function_call_name] <= self.function_call_max_loop and function_full_response != {}:
+            if self.function_calls_counter[function_call_name] <= self.function_call_max_loop and function_full_response != "{}":
                 function_call_max_tokens = self.truncate_limit - message_token["total"] - 1000
                 if function_call_max_tokens <= 0:
                     function_call_max_tokens = int(self.truncate_limit / 2)
@@ -645,7 +645,7 @@ class chatgpt(BaseLLM):
                         # print("response.status_code", response.status_code, response.status_code == 200, response != None and response.status_code == 200, response.text == "", response.text[:400])
                         if response.status_code == 400 or response.status_code == 422:
                             print("response.text", response.text)
-                            if _ == 2:
+                            if "Content did not pass the moral check" in response.text:
                                 raise Exception(f"{response.status_code} {response.reason_phrase} {response.text[:400]}")
                             if "function calling" in response.text:
                                 if "tools" in json_post:
@@ -775,7 +775,7 @@ class chatgpt(BaseLLM):
                 self.function_calls_counter[function_call_name] = 1
             else:
                 self.function_calls_counter[function_call_name] += 1
-            if self.function_calls_counter[function_call_name] <= self.function_call_max_loop and function_full_response != {}:
+            if self.function_calls_counter[function_call_name] <= self.function_call_max_loop and function_full_response != "{}":
                 function_call_max_tokens = self.truncate_limit - message_token["total"] - 1000
                 if function_call_max_tokens <= 0:
                     function_call_max_tokens = int(self.truncate_limit / 2)
