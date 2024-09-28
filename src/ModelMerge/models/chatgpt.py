@@ -491,7 +491,6 @@ class chatgpt(BaseLLM):
         full_response: str = ""
         function_full_response: str = ""
         function_call_name: str = ""
-        function_call_id: str = ""
         need_function_call: bool = False
         total_tokens = 0
         for line in response.iter_lines():
@@ -623,7 +622,6 @@ class chatgpt(BaseLLM):
         full_response: str = ""
         function_full_response: str = ""
         function_call_name: str = ""
-        function_call_id: str = ""
         need_function_call: bool = False
         total_tokens = 0
 
@@ -723,13 +721,17 @@ class chatgpt(BaseLLM):
                             if line == "[DONE]":
                                 break
                         else:
-                            line = json.loads(line)
-                            full_response = safe_get(line, "choices", 0, "message", "content")
-                            if full_response:
-                                yield full_response
-                            else:
-                                yield line
-                            break
+                            try:
+                                line = json.loads(line)
+                                full_response = safe_get(line, "choices", 0, "message", "content")
+                                if full_response:
+                                    yield full_response
+                                else:
+                                    yield line
+                                break
+                            except:
+                                print("json.loads error:", repr(line))
+                                continue
                         resp: dict = json.loads(line)
                         if "error" in resp:
                             raise Exception(f"{resp}")
