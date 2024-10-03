@@ -777,7 +777,7 @@ class chatgpt(BaseLLM):
                 self.function_calls_counter[function_call_name] = 1
             else:
                 self.function_calls_counter[function_call_name] += 1
-            if self.function_calls_counter[function_call_name] <= self.function_call_max_loop and function_full_response != "{}":
+            if self.function_calls_counter[function_call_name] <= self.function_call_max_loop and (function_full_response != "{}" or function_call_name == "get_date_time_weekday"):
                 function_call_max_tokens = self.truncate_limit - message_token["total"] - 1000
                 if function_call_max_tokens <= 0:
                     function_call_max_tokens = int(self.truncate_limit / 2)
