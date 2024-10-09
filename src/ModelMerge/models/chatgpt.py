@@ -497,7 +497,8 @@ class chatgpt(BaseLLM):
             line = line.decode("utf-8")
             if not line or line.startswith(':'):
                 continue
-            # print(line)
+            if self.print_log:
+                print(line)
             if line.startswith('data:'):
                 line = line.lstrip("data: ")
                 if line == "[DONE]":
@@ -639,9 +640,10 @@ class chatgpt(BaseLLM):
                 ) as response:
                     # print("response.text", response.text)
                     if response != None:
-                        await response.aread()
+                        # await response.aread()
                         # print("response.status_code", response.status_code, response.status_code == 200, response != None and response.status_code == 200, response.text == "", response.text[:400])
                         if response.status_code == 400 or response.status_code == 422:
+                            await response.aread()
                             print("response.text", response.text)
                             if "Content did not pass the moral check" in response.text:
                                 raise Exception(f"{response.status_code} {response.reason_phrase} {response.text[:400]}")
@@ -672,6 +674,7 @@ class chatgpt(BaseLLM):
                                     del json_post["tool_choice"]
                             continue
                         if response.status_code == 503:
+                            await response.aread()
                             # print("response.text", response.text)
                             if "Sorry, server is busy" in response.text:
                                 for index, mess in enumerate(json_post["messages"]):
@@ -681,20 +684,20 @@ class chatgpt(BaseLLM):
                                             "content": mess["content"][0]["text"]
                                         }
                             continue
-                        if response.status_code == 200 and "is not possible because the prompts occupy" in response.text:
-                            max_tokens = re.findall(r"only\s(\d+)\stokens", response.text)
-                            # print("max_tokens", max_tokens)
-                            if max_tokens:
-                                json_post["max_tokens"] = int(max_tokens[0])
-                                continue
-                        if response.status_code == 200 and response.text == "":
-                            for index, mess in enumerate(json_post["messages"]):
-                                if type(mess["content"]) == list and "text" in mess["content"][0]:
-                                    json_post["messages"][index] = {
-                                        "role": mess["role"],
-                                        "content": mess["content"][0]["text"]
-                                    }
-                            continue
+                        # if response.status_code == 200 and "is not possible because the prompts occupy" in response.text:
+                        #     max_tokens = re.findall(r"only\s(\d+)\stokens", response.text)
+                        #     # print("max_tokens", max_tokens)
+                        #     if max_tokens:
+                        #         json_post["max_tokens"] = int(max_tokens[0])
+                        #         continue
+                        # if response.status_code == 200 and response.text == "":
+                        #     for index, mess in enumerate(json_post["messages"]):
+                        #         if type(mess["content"]) == list and "text" in mess["content"][0]:
+                        #             json_post["messages"][index] = {
+                        #                 "role": mess["role"],
+                        #                 "content": mess["content"][0]["text"]
+                        #             }
+                        #     continue
                         if response.status_code != 200:
                             raise Exception(f"{response.status_code} {response.reason_phrase} {response.text[:400]}")
                     else:
@@ -715,7 +718,8 @@ class chatgpt(BaseLLM):
                         line = line.strip()
                         if not line or line.startswith(':'):
                             continue
-                        # print(line)
+                        if self.print_log:
+                            print(line)
                         if line.startswith('data:'):
                             line = line.lstrip("data: ")
                             if line == "[DONE]":
