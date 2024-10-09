@@ -497,8 +497,7 @@ class chatgpt(BaseLLM):
             line = line.decode("utf-8")
             if not line or line.startswith(':'):
                 continue
-            if self.print_log:
-                print(line)
+            # print(line)
             if line.startswith('data:'):
                 line = line.lstrip("data: ")
                 if line == "[DONE]":
@@ -718,8 +717,7 @@ class chatgpt(BaseLLM):
                         line = line.strip()
                         if not line or line.startswith(':'):
                             continue
-                        if self.print_log:
-                            print(line)
+                        # print(line)
                         if line.startswith('data:'):
                             line = line.lstrip("data: ")
                             if line == "[DONE]":
