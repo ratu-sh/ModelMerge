@@ -704,6 +704,7 @@ class chatgpt(BaseLLM):
                         raise Exception(f"response is None, please check the connection or network.")
 
                     if "o1-preview" in model or "o1-mini" in model:
+                        await response.aread()
                         line = response.text
                         line = json.loads(line)
                         # print(line)
