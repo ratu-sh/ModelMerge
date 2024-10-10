@@ -698,6 +698,7 @@ class chatgpt(BaseLLM):
                         #             }
                         #     continue
                         if response.status_code != 200:
+                            await response.aread()
                             raise Exception(f"{response.status_code} {response.reason_phrase} {response.text[:400]}")
                     else:
                         raise Exception(f"response is None, please check the connection or network.")
