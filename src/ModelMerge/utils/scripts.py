@@ -65,7 +65,7 @@ def get_image_message(image_url, message, engine = None):
         if "gpt-4" in engine \
         or (os.environ.get('claude_api_key', None) is None and "claude-3" in engine) \
         or (os.environ.get('GOOGLE_AI_API_KEY', None) is None and "gemini" in engine) \
-        or (os.environ.get('VERTEX_CLIENT_EMAIL', None) is None and os.environ.get('VERTEX_PRIVATE_KEY', None) is None and os.environ.get("VERTEX_PROJECT_ID", None) is None and "gemini" in engine):
+        or (os.environ.get('GOOGLE_AI_API_KEY', None) is None and os.environ.get('VERTEX_CLIENT_EMAIL', None) is None and os.environ.get('VERTEX_PRIVATE_KEY', None) is None and os.environ.get("VERTEX_PROJECT_ID", None) is None and "gemini" in engine):
             message.append(
                 {
                     "type": "image_url",

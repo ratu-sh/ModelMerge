@@ -43,7 +43,7 @@ class gemini(BaseLLM):
         Add a message to the conversation
         """
 
-        if convo_id not in self.conversation or pass_history <= 2:
+        if convo_id not in self.conversation:
             self.reset(convo_id=convo_id)
         # print("message", message)
 
