@@ -44,7 +44,7 @@ class chatgpt(BaseLLM):
     def __init__(
         self,
         api_key: str = None,
-        engine: str = os.environ.get("GPT_ENGINE") or "gpt-3.5-turbo",
+        engine: str = os.environ.get("GPT_ENGINE") or "gpt-4o",
         api_url: str = (os.environ.get("API_URL") or "https://api.openai.com/v1/chat/completions"),
         system_prompt: str = "You are ChatGPT, a large language model trained by OpenAI. Respond conversationally",
         proxy: str = None,
