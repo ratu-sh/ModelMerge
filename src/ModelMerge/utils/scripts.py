@@ -119,6 +119,7 @@ def get_audio_message(file_bytes):
 def Document_extract(docurl, docpath=None, engine = None):
     filename = docpath
     text = None
+    prompt = None
     if docpath and docurl and "paper.pdf" != docpath:
         filename = get_doc_from_url(docurl)
         docpath = os.getcwd() + "/" + filename
